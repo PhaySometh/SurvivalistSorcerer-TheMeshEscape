@@ -24,7 +24,7 @@ public class PlayerMovementScript : MonoBehaviour
     private CharacterController characterController;
 
     private bool canMove = true;
-    private PlayerStamina playerStamina; // NEW: Reference to stamina system
+    // Stamina system removed: sprinting now depends only on input
 
     // Public sprint state for other systems (cameras, VFX)
     public bool IsSprinting { get; private set; } = false;
@@ -42,12 +42,7 @@ public class PlayerMovementScript : MonoBehaviour
             Debug.LogError("PlayerMovementScript requires a CharacterController on the player or the character model.");
         }
         
-        // NEW: Get stamina component
-        playerStamina = GetComponent<PlayerStamina>();
-        if (playerStamina == null)
-        {
-            Debug.LogWarning("PlayerStamina not found! Stamina system disabled.");
-        }
+        // Stamina system removed; sprinting will be based on input only
         
         // Default camera reference
         if (playerCamera == null)
@@ -62,9 +57,10 @@ public class PlayerMovementScript : MonoBehaviour
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
 
-        // NEW: Check stamina before allowing sprint
+        // Sprint whenever LeftShift is held
         bool wantToRun = Input.GetKey(KeyCode.LeftShift);
-        bool isRunning = wantToRun && (playerStamina == null || playerStamina.CanSprint());
+        bool isRunning = wantToRun;
+        IsSprinting = isRunning;
         float speed = (isRunning ? runSpeed : walkSpeed);
 
         Vector3 input = new Vector3(h, 0f, v);
