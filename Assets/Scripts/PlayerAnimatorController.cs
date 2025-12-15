@@ -1,124 +1,151 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Animator))]
+[RequireComponent(typeof(CharacterController))]
 public class PlayerAnimatorController : MonoBehaviour
 {
-    public Animator animator;
-    public PlayerMovementScript movement;
-    public CharacterController controller;
+    [Header("Components")]
+    [SerializeField] private Animator _animator;
+    [SerializeField] private CharacterController _controller;
 
-    // Parameter names (match these in your Animator)
-    public string speedParam = "Speed";
-    public string groundedParam = "IsGrounded";
-    public string crouchParam = "IsCrouching";
-    public string sprintParam = "IsSprinting";
-    public string jumpParam = "Jump"; // trigger
-    [Header("Debug")]
-    public bool debugGUI = false;
-    public bool logParametersOnStart = false;
+    // --- Optimization: Hash IDs for performance ---
+    // Locomotion
+    private int _speedHash;
+    private int _inputXHash; // For strafing
+    private int _inputYHash; // For forward/back
+    private int _isGroundedHash;
+    private int _isSprintingHash;
+    
+    // Actions
+    private int _jumpTriggerHash;
+    private int _crouchBoolHash;
+    private int _interactTriggerHash;
+    private int _pickupTriggerHash;
+    private int _potionTriggerHash;
 
-    void Awake()
+    // Combat
+    private int _attackTriggerHash;
+    private int _attackIndexHash; // To select Attack 01, 02, 03...
+    private int _isDefendingHash; // Bool for holding shield
+    private int _defendHitTriggerHash; // Blocked an attack
+    private int _getHitTriggerHash; // Took damage
+    
+    // States
+    private int _isDizzyHash;
+    private int _victoryBoolHash;
+    private int _dieTriggerHash;
+    private int _respawnTriggerHash;
+
+    private void Awake()
     {
-        if (animator == null) animator = GetComponent<Animator>();
-        if (movement == null) movement = GetComponent<PlayerMovementScript>();
-        if (controller == null) controller = GetComponent<CharacterController>();
+        if (_animator == null) _animator = GetComponent<Animator>();
+        if (_controller == null) _controller = GetComponent<CharacterController>();
+
+        // Initialize Hashes (Matches Parameter names in Animator)
+        _speedHash = Animator.StringToHash("Speed");
+        _inputXHash = Animator.StringToHash("InputX");
+        _inputYHash = Animator.StringToHash("InputY");
+        _isGroundedHash = Animator.StringToHash("IsGrounded");
+        _isSprintingHash = Animator.StringToHash("IsSprinting");
+        
+        _jumpTriggerHash = Animator.StringToHash("Jump");
+        _crouchBoolHash = Animator.StringToHash("IsCrouching");
+        _interactTriggerHash = Animator.StringToHash("Interact");
+        _pickupTriggerHash = Animator.StringToHash("PickUp");
+        _potionTriggerHash = Animator.StringToHash("PotionDrink");
+
+        _attackTriggerHash = Animator.StringToHash("Attack");
+        _attackIndexHash = Animator.StringToHash("AttackIndex");
+        _isDefendingHash = Animator.StringToHash("IsDefending");
+        _defendHitTriggerHash = Animator.StringToHash("DefendHit");
+        _getHitTriggerHash = Animator.StringToHash("GetHit");
+
+        _isDizzyHash = Animator.StringToHash("IsDizzy");
+        _victoryBoolHash = Animator.StringToHash("Victory");
+        _dieTriggerHash = Animator.StringToHash("Die");
+        _respawnTriggerHash = Animator.StringToHash("Respawn");
     }
 
-    void Update()
+    private void Update()
     {
-        if (animator == null) return;
-
-        // Speed (horizontal magnitude)
-        float speed = 0f;
-        if (controller != null)
-        {
-            Vector3 flatVel = new Vector3(controller.velocity.x, 0f, controller.velocity.z);
-            speed = flatVel.magnitude;
-        }
-
-        SetFloatIfExists(speedParam, speed);
-
-        // Grounded
-        bool isGrounded = controller != null ? controller.isGrounded : true;
-        SetBoolIfExists(groundedParam, isGrounded);
-
-        // Crouch detection (based on controller height if available)
-        bool isCrouch = false;
-        if (controller != null && movement != null)
-            isCrouch = controller.height < movement.defaultHeight - 0.1f;
-        SetBoolIfExists(crouchParam, isCrouch);
-
-        // Sprint
-        bool isSprint = movement != null ? movement.IsSprinting : Input.GetKey(KeyCode.LeftShift);
-        SetBoolIfExists(sprintParam, isSprint);
-
-        // Jump trigger
-        if (Input.GetButtonDown("Jump") && isGrounded)
-        {
-            SetTriggerIfExists(jumpParam);
-        }
-        if (debugGUI && Application.isPlaying)
-        {
-            // nothing here; OnGUI displays info
-        }
+        // Handle continuous physical parameters automatically
+        UpdateMovementParameters();
     }
 
-    void Start()
+    private void UpdateMovementParameters()
     {
-        if (logParametersOnStart && animator != null)
-        {
-            Debug.Log("Animator parameters for: " + animator.runtimeAnimatorController.name + " -> " + string.Join(", ", System.Array.ConvertAll(animator.parameters, p => p.name + ":" + p.type))); 
-        }
+        if (_controller == null) return;
+
+        // Calculate horizontal speed (ignoring jumping/falling Y)
+        Vector3 horizontalVelocity = new Vector3(_controller.velocity.x, 0, _controller.velocity.z);
+        float currentSpeed = horizontalVelocity.magnitude;
+
+        // Send Speed to Animator
+        _animator.SetFloat(_speedHash, currentSpeed);
+        _animator.SetBool(_isGroundedHash, _controller.isGrounded);
     }
 
-    void OnGUI()
-    {
-        if (!debugGUI || animator == null || !Application.isPlaying) return;
+    // =========================================================
+    // PUBLIC API - Call these from your PlayerMovement or Input Script
+    // =========================================================
 
-        GUILayout.BeginArea(new Rect(10, 10, 300, 200), "Animator Debug", GUI.skin.window);
-        GUILayout.Label("State: " + animator.GetCurrentAnimatorStateInfo(0).IsName("") + " (Hash:" + animator.GetCurrentAnimatorStateInfo(0).fullPathHash + ")");
-        GUILayout.Label("Layer 0 State: " + animator.GetCurrentAnimatorStateInfo(0).shortNameHash);
-        foreach (var p in animator.parameters)
-        {
-            switch (p.type)
-            {
-                case AnimatorControllerParameterType.Bool:
-                    GUILayout.Label(p.name + ": " + animator.GetBool(p.name));
-                    break;
-                case AnimatorControllerParameterType.Float:
-                    GUILayout.Label(p.name + ": " + animator.GetFloat(p.name).ToString("F2"));
-                    break;
-                case AnimatorControllerParameterType.Int:
-                    GUILayout.Label(p.name + ": " + animator.GetInteger(p.name));
-                    break;
-                case AnimatorControllerParameterType.Trigger:
-                    GUILayout.Label(p.name + ": (Trigger)");
-                    break;
-            }
-        }
-        GUILayout.EndArea();
+    /// <summary>
+    /// Updates values for Blend Trees (Strafing)
+    /// </summary>
+    public void SetLocomotionInput(float x, float y, bool isSprinting)
+    {
+        _animator.SetFloat(_inputXHash, x);
+        _animator.SetFloat(_inputYHash, y);
+        _animator.SetBool(_isSprintingHash, isSprinting);
     }
 
-    bool HasParam(string name)
+    public void SetCrouch(bool isCrouching)
     {
-        if (animator == null) return false;
-        var pars = animator.parameters;
-        for (int i = 0; i < pars.Length; i++) if (pars[i].name == name) return true;
-        return false;
+        _animator.SetBool(_crouchBoolHash, isCrouching);
     }
 
-    void SetFloatIfExists(string name, float value)
+    public void TriggerJump()
     {
-        if (HasParam(name)) animator.SetFloat(name, value);
+        // Only trigger jump if we aren't already jumping to prevent spam
+        if(_controller.isGrounded)
+            _animator.SetTrigger(_jumpTriggerHash);
     }
 
-    void SetBoolIfExists(string name, bool value)
+    /// <summary>
+    /// Triggers an attack. 
+    /// Index 1 = Attack01, Index 2 = Attack02, etc.
+    /// </summary>
+    public void TriggerAttack(int attackIndex)
     {
-        if (HasParam(name)) animator.SetBool(name, value);
+        _animator.SetInteger(_attackIndexHash, attackIndex);
+        _animator.SetTrigger(_attackTriggerHash);
     }
 
-    void SetTriggerIfExists(string name)
+    public void SetDefending(bool isDefending)
     {
-        if (HasParam(name)) animator.SetTrigger(name);
+        _animator.SetBool(_isDefendingHash, isDefending);
     }
+
+    public void TriggerDefendHit()
+    {
+        _animator.SetTrigger(_defendHitTriggerHash);
+    }
+
+    public void TriggerGetHit()
+    {
+        _animator.SetTrigger(_getHitTriggerHash);
+    }
+
+    public void SetDizzy(bool state)
+    {
+        _animator.SetBool(_isDizzyHash, state);
+    }
+
+    public void TriggerInteraction() => _animator.SetTrigger(_interactTriggerHash);
+    public void TriggerPickUp() => _animator.SetTrigger(_pickupTriggerHash);
+    public void TriggerPotion() => _animator.SetTrigger(_potionTriggerHash);
+
+    public void SetVictory(bool state) => _animator.SetBool(_victoryBoolHash, state);
+
+    public void TriggerDeath() => _animator.SetTrigger(_dieTriggerHash);
+    public void TriggerRespawn() => _animator.SetTrigger(_respawnTriggerHash); // For DieRecovery
 }
