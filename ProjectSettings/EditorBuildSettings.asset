@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/MenuScence.unity
     guid: a290c72bced7647d2af5c098cd9fbf8c
   - enabled: 1
+    path: Assets/Scenes/LoadingScene.unity
+    guid: b237e7ac71d6743cebdbb181262e27ca
+  - enabled: 1
     path: Assets/Scenes/VilageMapScene.unity
     guid: f6de292475e8d4d4da71a81de66e2a27
   m_configObjects: {}
