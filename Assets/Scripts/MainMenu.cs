@@ -3,16 +3,34 @@ using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
+    public bool useLoadingScreen = true;
+
     // Load the game scene (Level 1 - Village)
     public void PlayGame()
     {
-        SceneManager.LoadScene("VilageMapScene");
+        if (useLoadingScreen)
+        {
+            PlayerPrefs.SetString("SceneToLoad", "VilageMapScene");
+            SceneManager.LoadScene("LoadingScene");
+        }
+        else
+        {
+            SceneManager.LoadScene("VilageMapScene");
+        }
     }
 
     // Load Level 2 - Angkor Wat
     public void LoadLevel2()
     {
-        SceneManager.LoadScene("Map2_AngkorWat");
+        if (useLoadingScreen)
+        {
+            PlayerPrefs.SetString("SceneToLoad", "Map2_AngkorWat");
+            SceneManager.LoadScene("LoadingScene");
+        }
+        else
+        {
+            SceneManager.LoadScene("Map2_AngkorWat");
+        }
     }
 
     // Return to Main Menu
