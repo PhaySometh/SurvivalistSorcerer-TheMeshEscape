@@ -11,24 +11,30 @@ public class EnemyAI : MonoBehaviour
 {
     [Header("References")]
     public NavMeshAgent agent;
+    public Animator anim;
     public Transform player;
 
-    [Header("Detection Settings")]
-    public float sightRange = 30f;
-    public float chaseStopDistance = 2f;
+    [Header("Combat Settings")]
+    public float attackRange = 1.5f; // Smaller default for small enemies
+    public float attackCooldown = 2.0f;
+    private float nextAttackTime = 0f;
+    private bool isDead = false;
 
-    [Header("Patrol Settings")]
-    public float walkPointRange = 20f;
-    private Vector3 walkPoint;
-    private bool walkPointSet = false;
+    [Header("Animation Names")]
+    public bool useTriggers = true;
+    public string idleState = "idle";
+    public string runState = "run";
+    public string attackStatePrefix = "attack_0";
+    public string damageState = "damage";
+    public string dieState = "die";
 
-    private enum EnemyState { Patrolling, Chasing }
-    private EnemyState currentState = EnemyState.Patrolling;
+    private string lastAnimationState = "";
 
     private void Awake()
     {
         // Get components
         agent = GetComponent<NavMeshAgent>();
+        if (anim == null) anim = GetComponent<Animator>();
         
         // Find player automatically
         if (player == null)
@@ -47,66 +53,137 @@ public class EnemyAI : MonoBehaviour
             Debug.LogError("Player not found!");
     }
 
+    private void Start()
+    {
+        // Subscribe to HealthSystem for feedback animations
+        HealthSystem health = GetComponent<HealthSystem>();
+        if (health != null)
+        {
+            health.OnTakeDamage.AddListener(PlayDamageAnimation);
+            health.OnDeath.AddListener(PlayDeathAnimation);
+        }
+    }
+
     private void Update()
     {
-        if (player == null || agent == null || !agent.isOnNavMesh)
+        if (player == null || agent == null || isDead)
             return;
 
-        // UPDATED: Always chase the player - no sight range limit!
-        // Enemy always knows where player is and chases relentlessly
-        ChasePlayer();
-    }
+        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
 
-    /// <summary>
-    /// Enemy patrols around randomly
-    /// </summary>
-    private void Patrol()
-    {
-        currentState = EnemyState.Patrolling;
-
-        if (!walkPointSet)
-            SearchWalkPoint();
-
-        if (walkPointSet)
+        if (!agent.isOnNavMesh)
         {
-            agent.SetDestination(walkPoint);
-            
-            // Check if reached walk point
-            if (!agent.hasPath || agent.remainingDistance <= agent.stoppingDistance)
+            NavMeshHit hit;
+            if (NavMesh.SamplePosition(transform.position, out hit, 2.0f, NavMesh.AllAreas))
             {
-                if (!agent.hasPath || agent.velocity.sqrMagnitude == 0f)
-                    walkPointSet = false;
+                agent.Warp(hit.position);
             }
+            return;
         }
-    }
 
-    /// <summary>
-    /// Search for a random patrol point
-    /// </summary>
-    private void SearchWalkPoint()
-    {
-        float randomZ = Random.Range(-walkPointRange, walkPointRange);
-        float randomX = Random.Range(-walkPointRange, walkPointRange);
-
-        walkPoint = transform.position + new Vector3(randomX, 0f, randomZ);
-
-        // Check if point is on NavMesh
-        NavMeshHit hit;
-        if (NavMesh.SamplePosition(walkPoint, out hit, 5f, NavMesh.AllAreas))
+        if (distanceToPlayer <= attackRange)
         {
-            walkPoint = hit.position;
-            walkPointSet = true;
+            AttackPlayer();
+        }
+        else
+        {
+            ChasePlayer();
+        }
+
+        // Update movement animation state
+        UpdateMovementAnimation();
+    }
+
+    private void UpdateMovementAnimation()
+    {
+        if (anim == null) return;
+
+        float currentSpeed = agent.velocity.magnitude;
+        
+        if (currentSpeed > 0.1f)
+        {
+            PlayAnimation(runState);
+        }
+        else
+        {
+            PlayAnimation(idleState);
         }
     }
 
-    /// <summary>
-    /// Chase the player
-    /// </summary>
+    private void PlayAnimation(string stateName)
+    {
+        if (lastAnimationState == stateName) return;
+
+        if (useTriggers)
+        {
+            anim.SetTrigger(stateName);
+        }
+        else
+        {
+            anim.CrossFade(stateName, 0.1f);
+        }
+        
+        lastAnimationState = stateName;
+    }
+
+    private void AttackPlayer()
+    {
+        // Stop moving
+        agent.isStopped = true;
+        agent.velocity = Vector3.zero;
+
+        if (Time.time >= nextAttackTime)
+        {
+            if (anim != null)
+            {
+                // Randomly pick one of the 3 attack animations
+                int attackRoll = Random.Range(1, 4);
+                string attackTrigger = attackStatePrefix + attackRoll.ToString();
+                
+                if (useTriggers) anim.SetTrigger(attackTrigger);
+                else anim.CrossFade(attackTrigger, 0.1f);
+                
+                lastAnimationState = "attacking";
+            }
+            nextAttackTime = Time.time + attackCooldown;
+        }
+    }
+
     private void ChasePlayer()
     {
-        currentState = EnemyState.Chasing;
+        agent.isStopped = false;
         agent.SetDestination(player.position);
+        
+        // Removed the 0.5s delay to make the boss attack instantly when it catches the player
+        
+        Debug.DrawLine(transform.position, player.position, Color.red);
     }
+
+    private void PlayDamageAnimation()
+    {
+        if (anim != null && !isDead)
+        {
+            if (useTriggers) anim.SetTrigger(damageState);
+            else anim.CrossFade(damageState, 0.1f);
+            
+            lastAnimationState = "damage";
+        }
+    }
+
+    private void PlayDeathAnimation()
+    {
+        isDead = true;
+        if (agent != null) agent.isStopped = true;
+        
+        if (anim != null)
+        {
+            if (useTriggers) anim.SetTrigger(dieState);
+            else anim.CrossFade(dieState, 0.1f);
+            
+            lastAnimationState = "dead";
+        }
+    }
+
 
     /// <summary>
     /// Draw gizmos for debugging
@@ -114,6 +191,6 @@ public class EnemyAI : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = new Color(1, 1, 0, 0.3f); // Yellow
-        Gizmos.DrawWireSphere(transform.position, sightRange);
+        Gizmos.DrawWireSphere(transform.position, attackRange);
     }
 }

@@ -15,6 +15,10 @@ public class UIManager : MonoBehaviour
     public GameObject gameOverPanel;
     public GameObject victoryPanel;
 
+    [Header("HUD Containers")]
+    public GameObject scoreContainer;
+    public GameObject timerContainer;
+
     private CanvasGroup centerTextGroup;
     private Coroutine currentFadeRoutine;
 
@@ -26,6 +30,15 @@ public class UIManager : MonoBehaviour
             if (centerTextGroup == null) centerTextGroup = centerNotificationText.gameObject.AddComponent<CanvasGroup>();
             centerTextGroup.alpha = 0;
         }
+
+        // Hide HUD containers OR the text objects directly if containers aren't assigned
+        Debug.Log("UIManager: Attempting to hide HUD at Awake...");
+        
+        if (scoreContainer) { scoreContainer.SetActive(false); Debug.Log("UIManager: scoreContainer hidden."); }
+        else if (scoreText) { scoreText.gameObject.SetActive(false); Debug.Log("UIManager: scoreText object hidden directly."); }
+
+        if (timerContainer) { timerContainer.SetActive(false); Debug.Log("UIManager: timerContainer hidden."); }
+        else if (timerText) { timerText.gameObject.SetActive(false); Debug.Log("UIManager: timerText object hidden directly."); }
     }
 
     void Start()
@@ -40,21 +53,46 @@ public class UIManager : MonoBehaviour
             
             // Force initial update
             UpdateScoreUI(GameManager.Instance.currentScore);
+            if (timerText != null) timerText.color = Color.white;
         }
 
         // Subscribe to WaveManager for personality text
         WaveManager waveManager = FindObjectOfType<WaveManager>();
         if (waveManager != null)
         {
+            Debug.Log("UIManager: Found WaveManager. Subscribing to OnStateChange.");
             waveManager.OnStateChange.AddListener(ShowNotification);
+            
+            // Subscribe to wave changes to show HUD
+            if (waveManager.OnWaveChange != null)
+                waveManager.OnWaveChange.AddListener(OnWaveStarted);
+        }
+        else
+        {
+            Debug.LogWarning("UIManager: WaveManager NOT found in scene!");
         }
         
         if (gameOverPanel) gameOverPanel.SetActive(false);
         if (victoryPanel) victoryPanel.SetActive(false);
     }
 
+    private void OnWaveStarted(int waveNumber)
+    {
+        // Show Score and Timer once Wave 1 starts
+        if (waveNumber == 1)
+        {
+            Debug.Log("UIManager: Wave 1 started. Showing HUD.");
+            if (scoreContainer) scoreContainer.SetActive(true);
+            else if (scoreText) scoreText.gameObject.SetActive(true);
+
+            if (timerContainer) timerContainer.SetActive(true);
+            else if (timerText) timerText.gameObject.SetActive(true);
+        }
+    }
+
     public void ShowNotification(string message)
     {
+        Debug.Log($"UIManager: Received Notification - {message}");
         if (centerNotificationText == null) return;
 
         if (currentFadeRoutine != null) StopCoroutine(currentFadeRoutine);
@@ -65,8 +103,8 @@ public class UIManager : MonoBehaviour
     {
         centerNotificationText.text = message;
         
-        // Fade In
-        float duration = 0.5f;
+        // SLOWER FADE
+        float duration = 1.0f; 
         float elapsed = 0f;
         while (elapsed < duration)
         {
@@ -76,9 +114,9 @@ public class UIManager : MonoBehaviour
         }
         centerTextGroup.alpha = 1;
 
-        yield return new WaitForSeconds(2f); // Hold
+        yield return new WaitForSeconds(2.5f); // Hold slightly longer
 
-        // Fade Out
+        // SLOWER FADE
         elapsed = 0f;
         while (elapsed < duration)
         {
@@ -138,5 +176,13 @@ public class UIManager : MonoBehaviour
         if (victoryPanel) victoryPanel.SetActive(true);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+    }
+
+    public void SetTimerSuddenDeath(bool activate)
+    {
+        if (timerText != null)
+        {
+            timerText.color = activate ? Color.red : Color.white;
+        }
     }
 }
