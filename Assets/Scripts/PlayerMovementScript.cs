@@ -69,9 +69,10 @@ public class PlayerMovementScript : MonoBehaviour
         float v = Input.GetAxis("Vertical");
 
         // 2. Determine Sprint Status
-        // We only sprint if moving forward and holding Shift
+        // We sprint if moving in ANY direction while holding Shift (omnidirectional)
         bool isShiftHeld = Input.GetKey(KeyCode.LeftShift);
-        IsSprinting = isShiftHeld && v > 0; 
+        Vector2 inputVector = new Vector2(h, v);
+        IsSprinting = isShiftHeld && inputVector.magnitude > 0.1f;
 
         // 3. Determine Speed based on state
         float currentSpeed = walkSpeed;
@@ -151,6 +152,15 @@ public class PlayerMovementScript : MonoBehaviour
             Quaternion target = Quaternion.LookRotation(flatMove.normalized);
             transform.rotation = Quaternion.Slerp(transform.rotation, target, rotateToMovementSpeed * Time.deltaTime);
         }
+
+        // 9. Void Failsafe - Reset player if they fall through the map
+        if (transform.position.y < -10f)
+        {
+            Debug.LogWarning("Player fell through map! Resetting position.");
+            characterController.enabled = false;
+            transform.position = new Vector3(0, 2f, 0); // Reset to spawn position
+            characterController.enabled = true;
+        }
         
         // // Optional: Camera Rotation Logic (Mouse Look)
         // if (canMove)
@@ -170,17 +180,8 @@ public class PlayerMovementScript : MonoBehaviour
     {
         if (!canMove || animController == null) return;
 
-        // --- ATTACKS ---
-        // Left Click = Attack 01
-        if (Input.GetMouseButtonDown(0))
-        {
-            animController.TriggerAttack(1); 
-        }
-        // Right Click = Attack 02 (or Heavy Attack)
-        if (Input.GetMouseButtonDown(1))
-        {
-            animController.TriggerAttack(2); 
-        }
+        // NOTE: Attack handling is now done by PlayerCombatSystem
+        // This method only handles non-combat interactions
 
         // --- DEFENSE ---
         // Hold Left Ctrl to Defend
@@ -206,7 +207,8 @@ public class PlayerMovementScript : MonoBehaviour
             animController.TriggerPotion();
         }
         
-        // H for Debug: Simulate getting Hit
+        // H for Debug: Simulate getting Hit (only in editor)
+        #if UNITY_EDITOR
         if (Input.GetKeyDown(KeyCode.H))
         {
             animController.TriggerGetHit();
@@ -217,5 +219,32 @@ public class PlayerMovementScript : MonoBehaviour
         {
             animController.TriggerDeath();
         }
+        #endif
+    }
+    
+    /// <summary>
+    /// Get the current actual movement speed (used by other systems)
+    /// </summary>
+    public float GetCurrentSpeed()
+    {
+        // Check if combat system exists and is attacking (for speed reduction)
+        PlayerCombatSystem combatSystem = GetComponent<PlayerCombatSystem>();
+        float speedMultiplier = 1f;
+        
+        if (combatSystem != null && combatSystem.IsAttacking)
+        {
+            speedMultiplier = combatSystem.MoveSpeedModifier;
+        }
+        
+        // Check for stats speed bonus
+        PlayerStats stats = GetComponent<PlayerStats>();
+        float speedBonus = 0f;
+        if (stats != null)
+        {
+            speedBonus = stats.CurrentSpeedBonus;
+        }
+        
+        float baseSpeed = IsSprinting ? runSpeed : walkSpeed;
+        return (baseSpeed + speedBonus) * speedMultiplier;
     }
 }
