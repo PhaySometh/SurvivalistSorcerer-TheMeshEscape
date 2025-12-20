@@ -13,12 +13,15 @@ public class HealthSystem : MonoBehaviour
     // Events
     public UnityEvent OnTakeDamage;
     public UnityEvent OnDeath;
+    public UnityEvent<float, float> OnHealthChanged; // currentHealth, maxHealth
 
     public bool IsDead => currentHealth <= 0;
+    public float CurrentHealth => currentHealth;
 
     void Start()
     {
         currentHealth = maxHealth;
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 
     public void TakeDamage(float damage)
@@ -29,6 +32,7 @@ public class HealthSystem : MonoBehaviour
         Debug.Log($"{gameObject.name} took {damage} damage. Health: {currentHealth}");
 
         OnTakeDamage?.Invoke();
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
 
         if (currentHealth <= 0)
         {
@@ -40,6 +44,24 @@ public class HealthSystem : MonoBehaviour
     {
         if (IsDead) return;
         currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+    }
+    
+    /// <summary>
+    /// Set health to a specific value (used when leveling up)
+    /// </summary>
+    public void SetHealth(float health)
+    {
+        currentHealth = Mathf.Clamp(health, 0, maxHealth);
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+    }
+    
+    /// <summary>
+    /// Get health as percentage (0-1)
+    /// </summary>
+    public float GetHealthPercentage()
+    {
+        return maxHealth > 0 ? currentHealth / maxHealth : 0f;
     }
 
     private void Die()
@@ -60,4 +82,14 @@ public class HealthSystem : MonoBehaviour
             }
         }
     }
+    
+    /// <summary>
+    /// Reset health to full (used for respawn)
+    /// </summary>
+    public void ResetHealth()
+    {
+        currentHealth = maxHealth;
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+    }
 }
+
