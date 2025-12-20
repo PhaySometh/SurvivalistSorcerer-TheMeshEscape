@@ -5,8 +5,12 @@ using UnityEngine.AI;
 
 public class EnemySpawner : MonoBehaviour
 {
+    [Header("Prefabs")]
+    public GameObject[] weakPrefabs;   // Difficulty 0
+    public GameObject[] mediumPrefabs; // Difficulty 1
+    public GameObject[] strongPrefabs; // Difficulty 2
+
     [Header("Settings")]
-    public GameObject[] enemyPrefabs; // [0] Weak, [1] Medium, [2] Strong
     public Transform playerTransform;
     public float spawnRadius = 20f;
     public float minSpawnDistance = 10f;
@@ -24,33 +28,41 @@ public class EnemySpawner : MonoBehaviour
         }
     }
 
-    public void SpawnEnemies(int count, int difficultyIndex = 0)
+    public void SpawnEnemies(int count, int difficultyIndex = 0, int subIndex = -1)
     {
-        if (enemyPrefabs == null || enemyPrefabs.Length == 0 || playerTransform == null)
+        if (playerTransform == null)
         {
-            Debug.LogError("EnemySpawner: Prefabs or Player missing!");
+            Debug.LogError("EnemySpawner: Player missing!");
             return;
         }
 
-        // Clamp index to array bounds
-        int index = Mathf.Clamp(difficultyIndex, 0, enemyPrefabs.Length - 1);
-        GameObject prefabToSpawn = enemyPrefabs[index];
+        GameObject prefabToSpawn = GetPrefabByDifficulty(difficultyIndex, subIndex);
+        if (prefabToSpawn == null) return;
 
         StartCoroutine(SpawnRoutine(count, prefabToSpawn));
     }
 
     /// <summary>
-    /// Spawns a total number of enemies distributed by difficulty weights over a duration.
-    /// Example weights: [0.7, 0.2, 0.1] = 70% Weak, 20% Medium, 10% Strong
+    /// Spawns mixed enemies. subIndexCaps allows limiting which prefabs in the arrays are used (e.g. only use first 2 weak ones).
     /// </summary>
-    public void SpawnMixedEnemies(int totalCount, float[] weights, float duration = 0f)
+    public void SpawnMixedEnemies(int totalCount, float[] weights, float duration = 0f, int[] subIndexCaps = null)
     {
-        if (enemyPrefabs == null || enemyPrefabs.Length == 0 || playerTransform == null) return;
+        if (playerTransform == null) return;
+        
+        bool hasAnyPrefabs = (weakPrefabs != null && weakPrefabs.Length > 0) || 
+                             (mediumPrefabs != null && mediumPrefabs.Length > 0) || 
+                             (strongPrefabs != null && strongPrefabs.Length > 0);
+                             
+        if (!hasAnyPrefabs) 
+        {
+            Debug.LogError("EnemySpawner: No prefabs assigned in any category!");
+            return;
+        }
 
-        StartCoroutine(SpawnMixedRoutine(totalCount, weights, duration));
+        StartCoroutine(SpawnMixedRoutine(totalCount, weights, duration, subIndexCaps));
     }
 
-    IEnumerator SpawnMixedRoutine(int totalCount, float[] weights, float duration)
+    IEnumerator SpawnMixedRoutine(int totalCount, float[] weights, float duration, int[] subIndexCaps)
     {
         float interval = duration > 0 ? duration / totalCount : 0.1f;
 
@@ -71,8 +83,17 @@ public class EnemySpawner : MonoBehaviour
             }
             
             // Safety check for index
-            selectedIndex = Mathf.Clamp(selectedIndex, 0, enemyPrefabs.Length - 1);
-            SpawnOneEnemy(enemyPrefabs[selectedIndex]);
+            selectedIndex = Mathf.Clamp(selectedIndex, 0, 2);
+            
+            int cap = -1;
+            if (subIndexCaps != null && selectedIndex < subIndexCaps.Length) cap = subIndexCaps[selectedIndex];
+
+            GameObject prefab = GetPrefabByDifficulty(selectedIndex, cap);
+            
+            if (prefab != null)
+            {
+                SpawnOneEnemy(prefab);
+            }
 
             if (duration > 0)
             {
@@ -83,6 +104,41 @@ public class EnemySpawner : MonoBehaviour
                 yield return new WaitForSeconds(0.1f);
             }
         }
+    }
+
+    private GameObject GetPrefabByDifficulty(int index, int forcedSubIndex = -1)
+    {
+        GameObject[] targetArray;
+        
+        switch (index)
+        {
+            case 0: targetArray = weakPrefabs; break;
+            case 1: targetArray = mediumPrefabs; break;
+            case 2: targetArray = strongPrefabs; break;
+            default: targetArray = weakPrefabs; break;
+        }
+
+        if (targetArray == null || targetArray.Length == 0)
+        {
+            // Fallback: try other arrays if one is empty
+            if (weakPrefabs != null && weakPrefabs.Length > 0) targetArray = weakPrefabs;
+            else if (mediumPrefabs != null && mediumPrefabs.Length > 0) targetArray = mediumPrefabs;
+            else if (strongPrefabs != null && strongPrefabs.Length > 0) targetArray = strongPrefabs;
+            else
+            {
+                Debug.LogError("EnemySpawner: All prefab arrays are empty!");
+                return null;
+            }
+        }
+
+        // If a specific subIndex is requested, use it (clamped to array size)
+        if (forcedSubIndex >= 0)
+        {
+            int subIndex = Mathf.Clamp(forcedSubIndex, 0, targetArray.Length - 1);
+            return targetArray[subIndex];
+        }
+
+        return targetArray[Random.Range(0, targetArray.Length)];
     }
 
     IEnumerator SpawnRoutine(int count, GameObject prefab)
@@ -124,17 +180,39 @@ public class EnemySpawner : MonoBehaviour
     {
         if (playerTransform == null) return Vector3.zero;
 
-        // Random point between minSpawnDistance and spawnRadius
-        float distance = Random.Range(minSpawnDistance, spawnRadius);
-        Vector2 randomCircle = Random.insideUnitCircle.normalized * distance;
-        Vector3 randomPoint = playerTransform.position + new Vector3(randomCircle.x, 0, randomCircle.y);
-
-        NavMeshHit hit;
-        // Find nearest point on NavMesh within 10 units (more range for modular terrain)
-        if (NavMesh.SamplePosition(randomPoint, out hit, 10f, NavMesh.AllAreas))
+        for (int attempts = 0; attempts < 10; attempts++)
         {
-            return hit.position;
+            // Random point between minSpawnDistance and spawnRadius
+            float distance = Random.Range(minSpawnDistance, spawnRadius);
+            Vector2 randomCircle = Random.insideUnitCircle.normalized * distance;
+            Vector3 randomPoint = playerTransform.position + new Vector3(randomCircle.x, 0, randomCircle.y);
+
+            NavMeshHit hit;
+            if (NavMesh.SamplePosition(randomPoint, out hit, 10f, NavMesh.AllAreas))
+            {
+                // ADDITION: Check if hit point is inside an obstacle or building
+                // We assume buildings have MeshColliders or BoxColliders
+                // Check if there are any colliders nearby that are NOT the floor
+                Collider[] colliders = Physics.OverlapSphere(hit.position, 1.5f);
+                bool occupied = false;
+                foreach (var col in colliders)
+                {
+                    // If it's not the enemy itself (if we had some) and not the ground (assuming ground is tagged or named)
+                    // Safety check: only avoid spawning if the name contains common obstacle keywords
+                    if (col.gameObject.name.Contains("Building") || 
+                        col.gameObject.name.Contains("Wall") || 
+                        col.gameObject.name.Contains("House") ||
+                        col.gameObject.name.Contains("Tree"))
+                    {
+                        occupied = true;
+                        break;
+                    }
+                }
+
+                if (!occupied) return hit.position;
+            }
         }
+        
         return Vector3.zero;
     }
 }

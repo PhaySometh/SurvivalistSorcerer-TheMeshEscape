@@ -15,6 +15,7 @@ public class GameManager : MonoBehaviour
     public int currentExperience = 0;
     public float timeRemaining;
     public bool isGameActive = false;
+    public bool isInSuddenDeath = false;
 
     // Events
     public UnityEvent<int> OnScoreChanged;
@@ -32,8 +33,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            // Update time limit even on existing instance if needed
-            Instance.levelTimeLimit = 600f;
+            // Keeping the Instance alive, its inspector values will be preserved.
             Destroy(gameObject);
         }
     }
@@ -61,7 +61,32 @@ public class GameManager : MonoBehaviour
 
         if (timeRemaining <= 0)
         {
-            GameOver();
+            if (!isInSuddenDeath)
+            {
+                TriggerSuddenDeath();
+            }
+            else
+            {
+                GameOver();
+            }
+        }
+    }
+
+    private void TriggerSuddenDeath()
+    {
+        isInSuddenDeath = true;
+        timeRemaining = 120f; // 2 minutes overtime
+        
+        WaveManager waveManager = FindObjectOfType<WaveManager>();
+        if (waveManager != null)
+        {
+            waveManager.TriggerSuddenDeath();
+        }
+
+        UIManager uiManager = FindObjectOfType<UIManager>();
+        if (uiManager != null)
+        {
+            uiManager.SetTimerSuddenDeath(true);
         }
     }
 
@@ -86,18 +111,7 @@ public class GameManager : MonoBehaviour
     {
         // Check if WaveManager handled this as "Sudden Death"
         WaveManager waveManager = FindObjectOfType<WaveManager>();
-        if (waveManager != null)
-        {
-            if (waveManager.currentState == WaveManager.WaveState.Victory) return;
-            
-            // If time is up, trigger Sudden Death instead of immediate Game Over
-            if (timeRemaining <= 0 && waveManager.currentState != WaveManager.WaveState.SuddenDeath)
-            {
-                Debug.Log("Time Limit Reached! Sudden Death!");
-                waveManager.TriggerSuddenDeath();
-                return;
-            }
-        }
+        if (waveManager != null && waveManager.currentState == WaveManager.WaveState.Victory) return;
     
         Debug.Log("Game Over!");
         isGameActive = false;
