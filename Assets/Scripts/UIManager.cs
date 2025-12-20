@@ -9,7 +9,12 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI centerNotificationText; // For personality messages
-    public Slider healthBar; // Optional if we have player health
+    
+    [Header("Player Stats UI")]
+    public Slider healthBar;
+    public Slider experienceBar;
+    public TextMeshProUGUI levelText;
+    public TextMeshProUGUI healthText; // Optional: "100/100"
     
     [Header("Panels")]
     public GameObject gameOverPanel;
@@ -18,9 +23,14 @@ public class UIManager : MonoBehaviour
     [Header("HUD Containers")]
     public GameObject scoreContainer;
     public GameObject timerContainer;
+    public GameObject playerStatsContainer; // Container for health/exp bars
 
     private CanvasGroup centerTextGroup;
     private Coroutine currentFadeRoutine;
+    
+    // Player references
+    private HealthSystem playerHealth;
+    private PlayerStats playerStats;
 
     void Awake()
     {
@@ -72,8 +82,50 @@ public class UIManager : MonoBehaviour
             Debug.LogWarning("UIManager: WaveManager NOT found in scene!");
         }
         
+        // Find and subscribe to Player's health and stats
+        ConnectToPlayer();
+        
         if (gameOverPanel) gameOverPanel.SetActive(false);
         if (victoryPanel) victoryPanel.SetActive(false);
+    }
+    
+    /// <summary>
+    /// Find player and connect to their health/stats systems
+    /// </summary>
+    private void ConnectToPlayer()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+        {
+            player = GameObject.Find("Player");
+        }
+        
+        if (player != null)
+        {
+            // Connect to HealthSystem
+            playerHealth = player.GetComponent<HealthSystem>();
+            if (playerHealth != null)
+            {
+                playerHealth.OnHealthChanged.AddListener(UpdateHealthUI);
+                Debug.Log("UIManager: Connected to Player HealthSystem");
+            }
+            
+            // Connect to PlayerStats
+            playerStats = player.GetComponent<PlayerStats>();
+            if (playerStats != null)
+            {
+                playerStats.OnLevelUp.AddListener(OnPlayerLevelUp);
+                playerStats.OnExpChanged.AddListener(UpdateExperienceUI);
+                
+                // Initial update
+                UpdateLevelUI(playerStats.CurrentLevel);
+                Debug.Log("UIManager: Connected to PlayerStats");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("UIManager: Player not found! Health bar won't update.");
+        }
     }
 
     private void OnWaveStarted(int waveNumber)
@@ -87,6 +139,9 @@ public class UIManager : MonoBehaviour
 
             if (timerContainer) timerContainer.SetActive(true);
             else if (timerText) timerText.gameObject.SetActive(true);
+            
+            // Also show player stats
+            if (playerStatsContainer) playerStatsContainer.SetActive(true);
         }
     }
 
@@ -137,6 +192,17 @@ public class UIManager : MonoBehaviour
             GameManager.Instance.OnGameOver.RemoveListener(ShowGameOver);
             GameManager.Instance.OnLevelComplete.RemoveListener(ShowVictory);
         }
+        
+        // Unsubscribe from player events
+        if (playerHealth != null)
+        {
+            playerHealth.OnHealthChanged.RemoveListener(UpdateHealthUI);
+        }
+        if (playerStats != null)
+        {
+            playerStats.OnLevelUp.RemoveListener(OnPlayerLevelUp);
+            playerStats.OnExpChanged.RemoveListener(UpdateExperienceUI);
+        }
     }
 
     void UpdateScoreUI(int score)
@@ -155,12 +221,52 @@ public class UIManager : MonoBehaviour
         }
     }
     
-    // Optional: Call this from Player HealthSystem
+    /// <summary>
+    /// Update health bar UI
+    /// </summary>
     public void UpdateHealthUI(float current, float max)
     {
         if (healthBar != null)
         {
             healthBar.value = current / max;
+        }
+        
+        if (healthText != null)
+        {
+            healthText.text = $"{Mathf.CeilToInt(current)}/{Mathf.CeilToInt(max)}";
+        }
+    }
+    
+    /// <summary>
+    /// Update experience bar UI
+    /// </summary>
+    public void UpdateExperienceUI(int currentExp, int expToNextLevel)
+    {
+        if (experienceBar != null)
+        {
+            experienceBar.value = expToNextLevel > 0 ? (float)currentExp / expToNextLevel : 1f;
+        }
+    }
+    
+    /// <summary>
+    /// Called when player levels up
+    /// </summary>
+    private void OnPlayerLevelUp(int newLevel)
+    {
+        UpdateLevelUI(newLevel);
+        
+        // Show level up notification
+        ShowNotification($"🎉 Level Up! You are now Level {newLevel}!");
+    }
+    
+    /// <summary>
+    /// Update level text
+    /// </summary>
+    private void UpdateLevelUI(int level)
+    {
+        if (levelText != null)
+        {
+            levelText.text = $"Lv. {level}";
         }
     }
 
@@ -186,3 +292,4 @@ public class UIManager : MonoBehaviour
         }
     }
 }
+
