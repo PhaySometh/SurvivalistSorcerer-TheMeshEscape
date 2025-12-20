@@ -160,6 +160,9 @@ public class PlayerAnimatorController : MonoBehaviour
     /// </summary>
     public void TriggerAirAttack()
     {
+        // prevent spamming air attacks to float
+        if (_isAttacking) return;
+
         // Use crossfade for smoother air attack transition
         _animator.CrossFade("JumpAirAttack", _transitionDuration);
         _animator.SetBool(_isAttackingHash, true);

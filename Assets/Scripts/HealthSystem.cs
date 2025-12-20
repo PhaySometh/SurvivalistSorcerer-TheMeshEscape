@@ -29,7 +29,11 @@ public class HealthSystem : MonoBehaviour
         if (IsDead) return;
 
         currentHealth -= damage;
-        Debug.Log($"{gameObject.name} took {damage} damage. Health: {currentHealth}");
+        // Debug.Log($"{gameObject.name} took {damage} damage. Health: {currentHealth}");
+
+        // Trigger animation if player
+        PlayerAnimatorController anim = GetComponent<PlayerAnimatorController>();
+        if (anim != null) anim.TriggerGetHit();
 
         OnTakeDamage?.Invoke();
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
@@ -68,18 +72,31 @@ public class HealthSystem : MonoBehaviour
     {
         currentHealth = 0;
         Debug.Log($"{gameObject.name} died.");
+        
+        // Trigger death animation
+        PlayerAnimatorController anim = GetComponent<PlayerAnimatorController>();
+        if (anim != null) anim.TriggerDeath();
+        
+        // Also check for regular Animator if it's an enemy
+        Animator basicAnim = GetComponent<Animator>();
+        if (basicAnim != null && anim == null) basicAnim.SetTrigger("Die");
+
         OnDeath?.Invoke();
 
-        // Optional: Destroy gameObject after a delay or immediately, managed by this flag
-        // or by a separate Death handler script.
-        if (destroyOnDeath)
+        if (gameObject.CompareTag("Player"))
         {
-            // If it's the player, we usually don't want to destroy the GameObject immediately 
-            // because we need to show Game Over UI, etc.
-            if (!gameObject.CompareTag("Player"))
-            {
-                Destroy(gameObject, 3f); // Delay for death animation
-            }
+            Debug.Log("PLAYER DIED - GAME OVER");
+            
+            // Disable movement
+            var mover = GetComponent<PlayerMovementScript>();
+            if (mover != null) mover.enabled = false;
+            
+            // Trigger Game Over in GameManager
+            GameManager.Instance.GameOver();
+        }
+        else if (destroyOnDeath)
+        {
+            Destroy(gameObject, 3f); // Delay for death animation
         }
     }
     
@@ -92,4 +109,3 @@ public class HealthSystem : MonoBehaviour
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 }
-

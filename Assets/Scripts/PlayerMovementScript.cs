@@ -158,7 +158,7 @@ public class PlayerMovementScript : MonoBehaviour
         {
             Debug.LogWarning("Player fell through map! Resetting position.");
             characterController.enabled = false;
-            transform.position = new Vector3(0, 2f, 0); // Reset to spawn position
+            transform.position = new Vector3(0, 20f, 0); // Reset to safe spawn position
             characterController.enabled = true;
         }
         
