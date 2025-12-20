@@ -26,6 +26,9 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
+        // Ensure time scale is normal when GameManager loads
+        Time.timeScale = 1f;
+        
         if (Instance == null)
         {
             Instance = this;
@@ -45,6 +48,9 @@ public class GameManager : MonoBehaviour
 
     public void StartGame()
     {
+        // Ensure time scale is normal when starting the game
+        Time.timeScale = 1f;
+        
         currentScore = 0;
         timeRemaining = levelTimeLimit;
         isGameActive = true;
