@@ -71,34 +71,80 @@ public class HealthSystem : MonoBehaviour
     private void Die()
     {
         currentHealth = 0;
-        Debug.Log($"{gameObject.name} died.");
+        Debug.Log($"💀 {gameObject.name} died!");
         
         // Trigger death animation
-        PlayerAnimatorController anim = GetComponent<PlayerAnimatorController>();
-        if (anim != null) anim.TriggerDeath();
+        PlayerAnimatorController playerAnim = GetComponent<PlayerAnimatorController>();
+        if (playerAnim != null) 
+        {
+            playerAnim.TriggerDeath();
+        }
         
-        // Also check for regular Animator if it's an enemy
+        // For enemies: Check for regular Animator
         Animator basicAnim = GetComponent<Animator>();
-        if (basicAnim != null && anim == null) basicAnim.SetTrigger("Die");
+        if (basicAnim != null && playerAnim == null)
+        {
+            // Try multiple possible trigger names for death animation
+            basicAnim.SetTrigger("Die");
+            basicAnim.SetTrigger("die");
+            basicAnim.SetTrigger("Death");
+            basicAnim.SetTrigger("death");
+            basicAnim.SetBool("IsDead", true);
+            basicAnim.SetBool("isDead", true);
+        }
+        
+        // For enemies: Stop NavMeshAgent
+        UnityEngine.AI.NavMeshAgent agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
+        if (agent != null)
+        {
+            agent.isStopped = true;
+            agent.enabled = false;
+        }
+        
+        // For enemies: Disable AI
+        EnemyAI enemyAI = GetComponent<EnemyAI>();
+        if (enemyAI != null)
+        {
+            enemyAI.enabled = false;
+        }
+        
+        // For enemies: Disable collision detector
+        EnemyCollisionDetector collisionDetector = GetComponentInChildren<EnemyCollisionDetector>();
+        if (collisionDetector != null)
+        {
+            collisionDetector.enabled = false;
+        }
+        
+        // Optionally disable the main collider so player can walk through
+        Collider col = GetComponent<Collider>();
+        if (col != null && !gameObject.CompareTag("Player"))
+        {
+            col.enabled = false;
+        }
 
         OnDeath?.Invoke();
 
         if (gameObject.CompareTag("Player"))
         {
-            Debug.Log("PLAYER DIED - GAME OVER");
+            Debug.Log("🎮 PLAYER DIED - GAME OVER");
             
             // Disable movement
             var mover = GetComponent<PlayerMovementScript>();
             if (mover != null) mover.enabled = false;
             
             // Trigger Game Over in GameManager
-            GameManager.Instance.GameOver();
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.GameOver();
+            }
         }
         else if (destroyOnDeath)
         {
-            Destroy(gameObject, 3f); // Delay for death animation
+            // Destroy enemy after death animation plays
+            Destroy(gameObject, 3f);
         }
     }
+
     
     /// <summary>
     /// Reset health to full (used for respawn)

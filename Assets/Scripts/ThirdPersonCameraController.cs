@@ -135,7 +135,7 @@ public class ThirdPersonCameraController : MonoBehaviour
 
     void LateUpdate()
     {
-        if (playerCharacter == null || playerCamera == null)
+        if (playerCharacter == null || playerCamera == null || !isCameraActive)
             return;
         
         // Calculate desired camera position (behind and above player)
@@ -159,8 +159,13 @@ public class ThirdPersonCameraController : MonoBehaviour
             followSmoothTime
         );
         
+        
+        // Safety: Ensure we don't look at a NaN position
+        Vector3 lookTarget = cameraLookPoint.position + Vector3.up * defaultHeight;
+        if (float.IsNaN(lookTarget.x) || float.IsNaN(lookTarget.y) || float.IsNaN(lookTarget.z)) return;
+
         // Look at character's head/look point
-        playerCamera.transform.LookAt(cameraLookPoint.position + Vector3.up * defaultHeight);
+        playerCamera.transform.LookAt(lookTarget);
     }
 
     /// <summary>
