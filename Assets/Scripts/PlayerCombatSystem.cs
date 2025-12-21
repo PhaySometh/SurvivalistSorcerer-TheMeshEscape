@@ -240,14 +240,23 @@ public class PlayerCombatSystem : MonoBehaviour
 
     /// <summary>
     /// Check for enemies in hitbox and deal damage
+    /// ENHANCED: Better detection that doesn't rely solely on layers
     /// </summary>
     private void CheckForHits(float damage)
     {
         // Get hitbox position (in front of player + offset up)
-        Vector3 hitboxPos = weaponHitboxCenter.position + transform.forward * 0.5f + Vector3.up * 0.5f;
+        Vector3 hitboxPos = weaponHitboxCenter.position + transform.forward * 0.8f + Vector3.up * 0.8f;
         
-        // Find all colliders in range
+        // First try: Use damageable layers
         Collider[] hits = Physics.OverlapSphere(hitboxPos, hitboxRadius, damageableLayers);
+        
+        // If no hits with layers, try ALL colliders as fallback
+        if (hits.Length == 0)
+        {
+            hits = Physics.OverlapSphere(hitboxPos, hitboxRadius);
+        }
+        
+        bool hitSomething = false;
         
         foreach (Collider hit in hits)
         {
@@ -256,15 +265,24 @@ public class PlayerCombatSystem : MonoBehaviour
             // Skip if already hit this attack
             if (hitEnemiesThisAttack.Contains(target)) continue;
             
-            // Skip self
+            // Skip self and children
             if (target == gameObject) continue;
             if (hit.transform.IsChildOf(transform)) continue;
+            if (hit.transform.root == transform) continue;
             
-            // Try to find HealthSystem on target or parent
+            // Check if this is an enemy using multiple methods
+            bool isEnemy = CheckIfEnemy(target);
+            if (!isEnemy) continue;
+            
+            // Try to find HealthSystem on target, parent, or root
             HealthSystem targetHealth = target.GetComponent<HealthSystem>();
             if (targetHealth == null)
             {
                 targetHealth = target.GetComponentInParent<HealthSystem>();
+            }
+            if (targetHealth == null)
+            {
+                targetHealth = target.transform.root.GetComponent<HealthSystem>();
             }
             
             if (targetHealth != null && !targetHealth.IsDead)
@@ -272,6 +290,7 @@ public class PlayerCombatSystem : MonoBehaviour
                 // Deal damage!
                 targetHealth.TakeDamage(damage);
                 hitEnemiesThisAttack.Add(target);
+                hitEnemiesThisAttack.Add(target.transform.root.gameObject); // Also add root
                 
                 // Play hit effects
                 PlayHitSound();
@@ -279,10 +298,51 @@ public class PlayerCombatSystem : MonoBehaviour
                 
                 OnDealDamage?.Invoke(damage);
                 
-                Debug.Log($"⚔️ Player dealt {damage} damage to {target.name}!");
+                hitSomething = true;
+                Debug.Log($"⚔️ Player dealt {damage} damage to {target.transform.root.name}! Their HP: {targetHealth.CurrentHealth}");
             }
         }
+        
+        // Debug: Log if we're swinging but not hitting
+        if (!hitSomething && hits.Length > 0)
+        {
+            Debug.Log($"🔍 Attack checked {hits.Length} colliders but none were valid enemies");
+        }
     }
+    
+    /// <summary>
+    /// Check if a GameObject is an enemy using multiple methods
+    /// </summary>
+    private bool CheckIfEnemy(GameObject obj)
+    {
+        // Method 1: Check tag
+        if (obj.CompareTag("Enemy")) return true;
+        if (obj.transform.root.CompareTag("Enemy")) return true;
+        
+        // Method 2: Check layer
+        if (obj.layer == LayerMask.NameToLayer("Enemy")) return true;
+        
+        // Method 3: Check for enemy components
+        if (obj.GetComponent<EnemyAI>() != null) return true;
+        if (obj.GetComponentInParent<EnemyAI>() != null) return true;
+        
+        // Method 4: Check for EnemyCollisionDetector (suggests it's an enemy)
+        if (obj.GetComponent<EnemyCollisionDetector>() != null) return true;
+        if (obj.GetComponentInParent<EnemyCollisionDetector>() != null) return true;
+        
+        // Method 5: Check name contains enemy keywords
+        string name = obj.name.ToLower();
+        string rootName = obj.transform.root.name.ToLower();
+        if (name.Contains("enemy") || name.Contains("slime") || name.Contains("turtle") || 
+            name.Contains("skeleton") || name.Contains("golem") || name.Contains("boss"))
+            return true;
+        if (rootName.Contains("enemy") || rootName.Contains("slime") || rootName.Contains("turtle") || 
+            rootName.Contains("skeleton") || rootName.Contains("golem") || rootName.Contains("boss"))
+            return true;
+        
+        return false;
+    }
+
 
     /// <summary>
     /// Reset combo state

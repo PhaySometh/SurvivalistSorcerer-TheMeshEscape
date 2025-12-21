@@ -173,7 +173,7 @@ public class EnemyAI : MonoBehaviour
     private void PlayDeathAnimation()
     {
         isDead = true;
-        if (agent != null) agent.isStopped = true;
+        if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh) agent.isStopped = true;
         
         if (anim != null)
         {
