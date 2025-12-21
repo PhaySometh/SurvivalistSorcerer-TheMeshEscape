@@ -47,6 +47,7 @@ public class PlayerAnimatorController : MonoBehaviour
     // State tracking
     private bool _isAttacking = false;
     private float _attackEndTime = 0f;
+    private bool _wasInAir = false; // Track if we were airborne
     
     // Public state
     public bool IsAttacking => _isAttacking && Time.time < _attackEndTime;
@@ -89,6 +90,23 @@ public class PlayerAnimatorController : MonoBehaviour
         // Handle continuous physical parameters automatically
         UpdateMovementParameters();
         
+        // CRITICAL FIX: Detect landing and reset attack state
+        bool isCurrentlyGrounded = _controller.isGrounded;
+        if (_wasInAir && isCurrentlyGrounded)
+        {
+            // Just landed! Force reset attack state to prevent stuck animation
+            if (_isAttacking)
+            {
+                _isAttacking = false;
+                _animator.SetBool(_isAttackingHash, false);
+                // Force transition to grounded state
+                _animator.ResetTrigger(_airAttackTriggerHash);
+                _animator.SetBool(_isGroundedHash, true);
+                Debug.Log("🔧 Landing detected - resetting attack state");
+            }
+        }
+        _wasInAir = !isCurrentlyGrounded;
+        
         // Update attack state
         if (_isAttacking && Time.time >= _attackEndTime)
         {
@@ -96,6 +114,7 @@ public class PlayerAnimatorController : MonoBehaviour
             _animator.SetBool(_isAttackingHash, false);
         }
     }
+
 
     private void UpdateMovementParameters()
     {

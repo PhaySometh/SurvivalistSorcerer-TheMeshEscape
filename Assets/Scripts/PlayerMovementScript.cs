@@ -78,17 +78,42 @@ public class PlayerMovementScript : MonoBehaviour
         float currentSpeed = walkSpeed;
         if (IsSprinting) currentSpeed = runSpeed;
         
-        // Check Crouch State
+        // Check Crouch State - WITH SAFETY CHECK
         bool isCrouching = Input.GetKey(KeyCode.C);
         if (isCrouching) 
         {
-            currentSpeed = crouchSpeed;
-            characterController.height = crouchHeight; // Physically shrink collider
+            // SAFETY: Only shrink collider if we're grounded to prevent falling through
+            if (characterController.isGrounded)
+            {
+                currentSpeed = crouchSpeed;
+                characterController.height = crouchHeight; // Physically shrink collider
+            }
+            else
+            {
+                // In air - don't change height, just reduce speed
+                currentSpeed = crouchSpeed;
+                isCrouching = false; // Don't trigger crouch animation in air
+            }
         }
         else
         {
-            characterController.height = defaultHeight; // Reset collider
+            // SAFETY: Smoothly restore height to prevent popping through ceiling
+            if (characterController.height < defaultHeight)
+            {
+                // Check if there's room above to stand up
+                Vector3 headCheck = transform.position + Vector3.up * defaultHeight;
+                if (!Physics.SphereCast(transform.position, 0.3f, Vector3.up, out RaycastHit hit, defaultHeight - crouchHeight + 0.1f))
+                {
+                    characterController.height = defaultHeight; // Reset collider
+                }
+                // else stay crouched if ceiling is too low
+            }
+            else
+            {
+                characterController.height = defaultHeight;
+            }
         }
+
 
         // --- ANIMATION SYNC: LOCOMOTION ---
         if (animController != null)
