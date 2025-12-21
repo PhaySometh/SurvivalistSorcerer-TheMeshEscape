@@ -272,16 +272,56 @@ public class UIManager : MonoBehaviour
 
     void ShowGameOver()
     {
-        if (gameOverPanel) gameOverPanel.SetActive(true);
+        Debug.Log("🎮 UIManager: Showing Game Over panel!");
+        
+        if (gameOverPanel != null) 
+        {
+            gameOverPanel.SetActive(true);
+        }
+        else
+        {
+            Debug.LogError("❌ UIManager: gameOverPanel is not assigned!");
+            // Show notification as fallback
+            ShowNotification("💀 GAME OVER 💀");
+        }
+        
+        // Unlock cursor so player can interact with UI
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+        
+        // Pause camera
+        ThirdPersonCameraController cameraControl = FindObjectOfType<ThirdPersonCameraController>();
+        if (cameraControl != null) cameraControl.PauseCamera();
+
+        // Pause the game
+        Time.timeScale = 0f;
     }
 
     void ShowVictory()
     {
-        if (victoryPanel) victoryPanel.SetActive(true);
+        Debug.Log("🎮 UIManager: Showing Victory panel!");
+        
+        if (victoryPanel != null) 
+        {
+            victoryPanel.SetActive(true);
+        }
+        else
+        {
+            Debug.LogError("❌ UIManager: victoryPanel is not assigned!");
+            // Show notification as fallback
+            ShowNotification("🎉 VICTORY! 🎉");
+        }
+        
+        // Unlock cursor
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+        
+        // Pause camera
+        ThirdPersonCameraController cameraControl = FindObjectOfType<ThirdPersonCameraController>();
+        if (cameraControl != null) cameraControl.PauseCamera();
+
+        // Pause the game
+        Time.timeScale = 0f;
     }
 
     public void SetTimerSuddenDeath(bool activate)

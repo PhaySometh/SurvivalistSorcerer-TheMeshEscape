@@ -90,24 +90,66 @@ public class MagicProjectile : MonoBehaviour
         if (other.CompareTag("Player")) return;
         if (other.transform.root.CompareTag("Player")) return;
         
-        // Try to damage the target
-        HealthSystem targetHealth = other.GetComponent<HealthSystem>();
-        if (targetHealth == null)
+        // Check if it's an enemy using multiple methods
+        bool isEnemy = CheckIfEnemy(other.gameObject);
+        
+        // Try to find and damage HealthSystem
+        if (isEnemy)
         {
-            targetHealth = other.GetComponentInParent<HealthSystem>();
+            HealthSystem targetHealth = other.GetComponent<HealthSystem>();
+            if (targetHealth == null) targetHealth = other.GetComponentInParent<HealthSystem>();
+            if (targetHealth == null) targetHealth = other.transform.root.GetComponent<HealthSystem>();
+            
+            if (targetHealth != null && !targetHealth.IsDead)
+            {
+                targetHealth.TakeDamage(damage);
+                Debug.Log($"🔥 Magic projectile hit {other.transform.root.name} for {damage} damage! Their HP: {targetHealth.CurrentHealth}");
+                OnHit(other.ClosestPoint(transform.position));
+                return;
+            }
         }
         
-        if (targetHealth != null && !targetHealth.IsDead)
+        // Hit environment (wall, ground, etc.)
+        if (!other.isTrigger)
         {
-            targetHealth.TakeDamage(damage);
-            Debug.Log($"🔥 Magic projectile hit {other.name} for {damage} damage!");
-            OnHit(other.ClosestPoint(transform.position));
-        }
-        else if (!other.isTrigger)
-        {
-            // Hit a wall or ground
             OnHit(transform.position);
         }
+    }
+    
+    /// <summary>
+    /// Check if object is an enemy using multiple methods
+    /// </summary>
+    private bool CheckIfEnemy(GameObject obj)
+    {
+        // Check tag
+        if (obj.CompareTag("Enemy")) return true;
+        if (obj.transform.root.CompareTag("Enemy")) return true;
+        
+        // Check layer
+        if (obj.layer == LayerMask.NameToLayer("Enemy")) return true;
+        
+        // Check for enemy components
+        if (obj.GetComponent<EnemyAI>() != null) return true;
+        if (obj.GetComponentInParent<EnemyAI>() != null) return true;
+        if (obj.GetComponent<EnemyCollisionDetector>() != null) return true;
+        if (obj.GetComponentInParent<EnemyCollisionDetector>() != null) return true;
+        
+        // Check name for common enemy names
+        string name = obj.name.ToLower();
+        string rootName = obj.transform.root.name.ToLower();
+        if (name.Contains("enemy") || name.Contains("slime") || name.Contains("turtle") ||
+            name.Contains("skeleton") || name.Contains("golem") || name.Contains("boss"))
+            return true;
+        if (rootName.Contains("enemy") || rootName.Contains("slime") || rootName.Contains("turtle") ||
+            rootName.Contains("skeleton") || rootName.Contains("golem") || rootName.Contains("boss"))
+            return true;
+        
+        // If it has a HealthSystem but isn't the player, it might be an enemy
+        HealthSystem health = obj.GetComponentInParent<HealthSystem>();
+        if (health != null && !obj.transform.root.CompareTag("Player"))
+            return true;
+            
+        return false;
     }
 
     void OnCollisionEnter(Collision collision)
