@@ -61,6 +61,12 @@ public class CoinSpawner : MonoBehaviour
 
     [Header("Terrain Detection")]
     public LayerMask groundLayer;
+    
+    [Header("Safety Settings")]
+    [Tooltip("Maximum allowed Y position for coin spawning (prevents sky spawns)")]
+    public float maxSpawnHeight = 50f;
+    [Tooltip("Minimum allowed Y position for coin spawning")]
+    public float minSpawnHeight = -5f;
 
     Vector3 GetRandomPositionNearPlayer()
     {
@@ -76,10 +82,31 @@ public class CoinSpawner : MonoBehaviour
         // Start raycast from much higher to ensure we are above all modular terrain pieces
         Vector3 rayStart = new Vector3(playerTransform.position.x + x, 500f, playerTransform.position.z + z);
         
+        // Use the configured groundLayer (should be set to "Ground" in Inspector)
+        LayerMask safeGroundLayer = groundLayer;
+        if (safeGroundLayer == 0)
+        {
+            // Fallback: Use Ground layer by default
+            safeGroundLayer = LayerMask.GetMask("Ground", "Default", "Terrain");
+        }
+        
         RaycastHit hit;
         // Use a longer ray (1000f) to ensure we hit the ground
-        if (Physics.Raycast(rayStart, Vector3.down, out hit, 1000f, groundLayer))
+        if (Physics.Raycast(rayStart, Vector3.down, out hit, 1000f, safeGroundLayer))
         {
+            // SAFETY CHECK: Validate Y position is reasonable
+            if (hit.point.y > maxSpawnHeight)
+            {
+                Debug.LogWarning($"⚠️ Coin spawn too high at Y={hit.point.y:F1}. Skipping.");
+                return Vector3.zero;
+            }
+            
+            if (hit.point.y < minSpawnHeight)
+            {
+                Debug.LogWarning($"⚠️ Coin spawn too low at Y={hit.point.y:F1}. Skipping.");
+                return Vector3.zero;
+            }
+            
             return hit.point;
         }
 
