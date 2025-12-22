@@ -33,6 +33,10 @@ public class PlayerMovementScript : MonoBehaviour
     [Header("Input Settings")]
     public bool useCameraRelativeMovement = true;
     public bool canMove = true;
+    
+    [Header("Debug")]
+    public bool showDebugLogs = false;
+    private float lastDebugLogTime = 0f;
 
     // Internal State
     private Vector3 moveDirection = Vector3.zero;
@@ -163,7 +167,40 @@ public class PlayerMovementScript : MonoBehaviour
         }
 
         // 6. Apply Gravity - ALWAYS apply downward force
-        if (!characterController.isGrounded)
+        // CRITICAL FIX: Check if we're actually on real ground, not NavMesh geometry
+        bool isActuallyGrounded = characterController.isGrounded;
+        
+        // Additional validation: Check if there's REAL terrain below us
+        if (isActuallyGrounded)
+        {
+            // Verify ground with raycast - only check Ground layer
+            LayerMask groundCheck = LayerMask.GetMask("Ground", "Default", "Terrain");
+            if (groundCheck != 0) // Only check if these layers exist
+            {
+                // Cast ray slightly ahead to catch edges
+                Vector3 rayStart = transform.position + Vector3.up * 0.2f;
+                bool hasGroundBelow = Physics.Raycast(rayStart, Vector3.down, 2.0f, groundCheck);
+                
+                if (!hasGroundBelow)
+                {
+                    // CharacterController thinks we're grounded, but there's no actual terrain below!
+                    // This happens when standing on NavMesh geometry
+                    isActuallyGrounded = false;
+                    
+                    // Apply stronger downward force to pull player down
+                    moveDirection.y = -gravity * 0.5f;
+                    
+                    // Log only once per second to avoid spam
+                    if (showDebugLogs && Time.time - lastDebugLogTime > 1f)
+                    {
+                        Debug.LogWarning("⚠️ False ground detected! Forcing gravity.");
+                        lastDebugLogTime = Time.time;
+                    }
+                }
+            }
+        }
+        
+        if (!isActuallyGrounded)
         {
             moveDirection.y -= gravity * Time.deltaTime;
             
