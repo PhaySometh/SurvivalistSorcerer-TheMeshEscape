@@ -22,8 +22,14 @@ public class PlayerPhysicsProtection : MonoBehaviour
     [Tooltip("Y position below which player is considered 'in void' - SET THIS HIGHER for faster detection")]
     public float voidYThreshold = -5f; // Changed from -10 to -5 for faster detection
     
+    [Tooltip("Y position ABOVE which player is considered 'sky-walking' (bug) - Set HIGHER than your terrain")]
+    public float skyWalkThreshold = 100f; // Increased from 50 to 100 to prevent false positives
+    
     [Tooltip("Position to respawn player when they fall into void")]
     public Vector3 safeRespawnPosition = new Vector3(0, 5f, 0);
+    
+    [Tooltip("Time after respawn before sky-walk detection activates (prevents respawn loops)")]
+    public float respawnGracePeriod = 2f;
     
     [Tooltip("Try to find a spawn point with this tag")]
     public string spawnPointTag = "SpawnPoint";
@@ -147,6 +153,23 @@ public class PlayerPhysicsProtection : MonoBehaviour
             if (showDebugLogs) Debug.LogWarning($"☠️ VOID DETECTED at Y={transform.position.y:F1}! Respawning...");
             ForceRespawn();
             return;
+        }
+        
+        // NEW CHECK: Sky-walking detection (above threshold) - WITH GRACE PERIOD
+        // Only check if enough time has passed since last respawn (prevents infinite loops)
+        if (Time.time - lastRespawnTime > respawnGracePeriod)
+        {
+            if (transform.position.y > skyWalkThreshold)
+            {
+                // Additional check: BOTH conditions must be true to prevent false positives
+                // Must be high AND not grounded by CharacterController
+                if (!characterController.isGrounded && !isGroundDetected && consecutiveNoGroundFrames > 30)
+                {
+                    if (showDebugLogs) Debug.LogWarning($"🚁 SKY-WALKING DETECTED at Y={transform.position.y:F1}! Respawning...");
+                    ForceRespawn();
+                    return;
+                }
+            }
         }
         
         // SECONDARY CHECK: Rapid fall detection
