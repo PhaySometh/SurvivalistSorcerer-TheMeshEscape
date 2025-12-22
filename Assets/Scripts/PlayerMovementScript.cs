@@ -40,7 +40,6 @@ public class PlayerMovementScript : MonoBehaviour
 
     // Internal State
     private Vector3 moveDirection = Vector3.zero;
-    private float rotationX = 0;
     public bool IsSprinting { get; private set; } = false;
 
     void Start()

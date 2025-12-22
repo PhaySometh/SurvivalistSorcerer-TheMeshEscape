@@ -26,8 +26,6 @@ public class WaveManager : MonoBehaviour
     public UnityEvent<int> OnWaveChange = new UnityEvent<int>();
     public UnityEvent<string> OnStateChange = new UnityEvent<string>(); // e.g. "Wave 1", "Resting...", "BOSS!"
 
-    private int suddenDeathEnemyCount = 0;
-
     void Start()
     {
         // Optional: Auto start or wait for player input

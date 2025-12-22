@@ -67,8 +67,8 @@ public class PlayerPhysicsProtection : MonoBehaviour
     private float lastGroundedTime;
     private Vector3 lastValidPosition;
     private float positionCheckTimer = 0f;
-    private float groundCheckTimer = 0f;
     private int consecutiveNoGroundFrames = 0;
+    private float lastRespawnTime = 0f;
 
     void Start()
     {
@@ -314,6 +314,7 @@ public class PlayerPhysicsProtection : MonoBehaviour
         // Reset all tracking
         currentAirTime = 0f;
         lastGroundedTime = Time.time;
+        lastRespawnTime = Time.time;
         lastGroundY = targetPos.y;
         lastGroundedPosition = targetPos;
         consecutiveNoGroundFrames = 0;

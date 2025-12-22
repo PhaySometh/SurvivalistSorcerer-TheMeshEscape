@@ -85,6 +85,62 @@ public class PlayerAnimatorController : MonoBehaviour
         _respawnTriggerHash = Animator.StringToHash("Respawn");
     }
 
+    // Helper method to safely set bool parameters
+    private void SafeSetBool(int hash, bool value)
+    {
+        if (_animator == null) return;
+        try
+        {
+            _animator.SetBool(hash, value);
+        }
+        catch (System.Exception)
+        {
+            // Parameter doesn't exist in animator controller - silently ignore
+        }
+    }
+
+    // Helper method to safely set float parameters
+    private void SafeSetFloat(int hash, float value)
+    {
+        if (_animator == null) return;
+        try
+        {
+            _animator.SetFloat(hash, value);
+        }
+        catch (System.Exception)
+        {
+            // Parameter doesn't exist in animator controller - silently ignore
+        }
+    }
+
+    // Helper method to safely set trigger parameters
+    private void SafeSetTrigger(int hash)
+    {
+        if (_animator == null) return;
+        try
+        {
+            _animator.SetTrigger(hash);
+        }
+        catch (System.Exception)
+        {
+            // Parameter doesn't exist in animator controller - silently ignore
+        }
+    }
+
+    // Helper method to safely set integer parameters
+    private void SafeSetInteger(int hash, int value)
+    {
+        if (_animator == null) return;
+        try
+        {
+            _animator.SetInteger(hash, value);
+        }
+        catch (System.Exception)
+        {
+            // Parameter doesn't exist in animator controller - silently ignore
+        }
+    }
+
     private void Update()
     {
         // Handle continuous physical parameters automatically
@@ -98,10 +154,10 @@ public class PlayerAnimatorController : MonoBehaviour
             if (_isAttacking)
             {
                 _isAttacking = false;
-                _animator.SetBool(_isAttackingHash, false);
+                SafeSetBool(_isAttackingHash, false);
                 // Force transition to grounded state
                 _animator.ResetTrigger(_airAttackTriggerHash);
-                _animator.SetBool(_isGroundedHash, true);
+                SafeSetBool(_isGroundedHash, true);
                 Debug.Log("🔧 Landing detected - resetting attack state");
             }
         }
@@ -111,7 +167,7 @@ public class PlayerAnimatorController : MonoBehaviour
         if (_isAttacking && Time.time >= _attackEndTime)
         {
             _isAttacking = false;
-            _animator.SetBool(_isAttackingHash, false);
+            SafeSetBool(_isAttackingHash, false);
         }
     }
 
@@ -125,8 +181,8 @@ public class PlayerAnimatorController : MonoBehaviour
         float currentSpeed = horizontalVelocity.magnitude;
 
         // Send Speed to Animator
-        _animator.SetFloat(_speedHash, currentSpeed);
-        _animator.SetBool(_isGroundedHash, _controller.isGrounded);
+        SafeSetFloat(_speedHash, currentSpeed);
+        SafeSetBool(_isGroundedHash, _controller.isGrounded);
     }
 
     // =========================================================
@@ -138,21 +194,21 @@ public class PlayerAnimatorController : MonoBehaviour
     /// </summary>
     public void SetLocomotionInput(float x, float y, bool isSprinting)
     {
-        _animator.SetFloat(_inputXHash, x);
-        _animator.SetFloat(_inputYHash, y);
-        _animator.SetBool(_isSprintingHash, isSprinting);
+        SafeSetFloat(_inputXHash, x);
+        SafeSetFloat(_inputYHash, y);
+        SafeSetBool(_isSprintingHash, isSprinting);
     }
 
     public void SetCrouch(bool isCrouching)
     {
-        _animator.SetBool(_crouchBoolHash, isCrouching);
+        SafeSetBool(_crouchBoolHash, isCrouching);
     }
 
     public void TriggerJump()
     {
         // Only trigger jump if we aren't already jumping to prevent spam
         if(_controller.isGrounded)
-            _animator.SetTrigger(_jumpTriggerHash);
+            SafeSetTrigger(_jumpTriggerHash);
     }
 
     /// <summary>
@@ -165,9 +221,9 @@ public class PlayerAnimatorController : MonoBehaviour
         // Check if we can interrupt current attack
         if (_isAttacking && !_allowAttackInterrupt) return;
         
-        _animator.SetInteger(_attackIndexHash, attackIndex);
-        _animator.SetTrigger(_attackTriggerHash);
-        _animator.SetBool(_isAttackingHash, true);
+        SafeSetInteger(_attackIndexHash, attackIndex);
+        SafeSetTrigger(_attackTriggerHash);
+        SafeSetBool(_isAttackingHash, true);
         
         // Mark as attacking with timeout
         _isAttacking = true;
@@ -184,7 +240,7 @@ public class PlayerAnimatorController : MonoBehaviour
 
         // Use crossfade for smoother air attack transition
         _animator.CrossFade("JumpAirAttack", _transitionDuration);
-        _animator.SetBool(_isAttackingHash, true);
+        SafeSetBool(_isAttackingHash, true);
         
         _isAttacking = true;
         _attackEndTime = Time.time + 0.5f;
@@ -201,32 +257,32 @@ public class PlayerAnimatorController : MonoBehaviour
 
     public void SetDefending(bool isDefending)
     {
-        _animator.SetBool(_isDefendingHash, isDefending);
+        SafeSetBool(_isDefendingHash, isDefending);
     }
 
     public void TriggerDefendHit()
     {
-        _animator.SetTrigger(_defendHitTriggerHash);
+        SafeSetTrigger(_defendHitTriggerHash);
     }
 
     public void TriggerGetHit()
     {
-        _animator.SetTrigger(_getHitTriggerHash);
+        SafeSetTrigger(_getHitTriggerHash);
     }
 
     public void SetDizzy(bool state)
     {
-        _animator.SetBool(_isDizzyHash, state);
+        SafeSetBool(_isDizzyHash, state);
     }
 
-    public void TriggerInteraction() => _animator.SetTrigger(_interactTriggerHash);
-    public void TriggerPickUp() => _animator.SetTrigger(_pickupTriggerHash);
-    public void TriggerPotion() => _animator.SetTrigger(_potionTriggerHash);
+    public void TriggerInteraction() => SafeSetTrigger(_interactTriggerHash);
+    public void TriggerPickUp() => SafeSetTrigger(_pickupTriggerHash);
+    public void TriggerPotion() => SafeSetTrigger(_potionTriggerHash);
 
-    public void SetVictory(bool state) => _animator.SetBool(_victoryBoolHash, state);
+    public void SetVictory(bool state) => SafeSetBool(_victoryBoolHash, state);
 
-    public void TriggerDeath() => _animator.SetTrigger(_dieTriggerHash);
-    public void TriggerRespawn() => _animator.SetTrigger(_respawnTriggerHash); // For DieRecovery
+    public void TriggerDeath() => SafeSetTrigger(_dieTriggerHash);
+    public void TriggerRespawn() => SafeSetTrigger(_respawnTriggerHash); // For DieRecovery
     
     /// <summary>
     /// Reset all triggers (useful when respawning)
@@ -241,6 +297,6 @@ public class PlayerAnimatorController : MonoBehaviour
         _animator.ResetTrigger(_respawnTriggerHash);
         
         _isAttacking = false;
-        _animator.SetBool(_isAttackingHash, false);
+        SafeSetBool(_isAttackingHash, false);
     }
 }
