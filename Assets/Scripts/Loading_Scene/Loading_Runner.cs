@@ -27,7 +27,13 @@ public class LoadingRunner : MonoBehaviour
 
     private void Start()
     {
-        // ... (existing Start code) ...
+        // Get the scene to load from PlayerPrefs (set by menu)
+        string targetScene = PlayerPrefs.GetString("SceneToLoad", "VilageMapScene");
+        if (!string.IsNullOrEmpty(targetScene))
+        {
+            sceneToLoadName = targetScene;
+        }
+        
         if (characterAnimator != null)
         {
             characterAnimator.SetFloat(SPEED_PARAM, RUNNING_SPEED_VALUE); 

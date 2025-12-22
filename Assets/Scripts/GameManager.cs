@@ -14,6 +14,7 @@ public class GameManager : MonoBehaviour
     public int currentScore = 0;
     public int currentExperience = 0;
     public float timeRemaining;
+    public float elapsedTime = 0f;
     public bool isGameActive = false;
     public bool isInSuddenDeath = false;
 
@@ -53,6 +54,7 @@ public class GameManager : MonoBehaviour
         
         currentScore = 0;
         timeRemaining = levelTimeLimit;
+        elapsedTime = 0f;
         isGameActive = true;
         OnScoreChanged?.Invoke(currentScore);
     }
@@ -62,6 +64,7 @@ public class GameManager : MonoBehaviour
         if (!isGameActive) return;
 
         // Timer Logic
+        elapsedTime += Time.deltaTime;
         timeRemaining -= Time.deltaTime;
         OnTimeChanged?.Invoke(timeRemaining);
 

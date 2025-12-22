@@ -40,13 +40,27 @@ public class MainMenu : MonoBehaviour
         if (menuMusic != null && menuMusic.isPlaying)
             menuMusic.Stop();
 
-        SceneManager.LoadScene("VilageMapScene");
+        // Set the target scene for the loading screen
+        PlayerPrefs.SetString("SceneToLoad", "VilageMapScene");
+        PlayerPrefs.Save();
+        
+        // Load the loading scene
+        SceneManager.LoadScene("LoadingScene");
     }
 
     // Load Level 2 - Angkor Wat
     public void LoadLevel2()
     {
-        SceneManager.LoadScene("Map2_AngkorWat");
+        // Stop menu music
+        if (menuMusic != null && menuMusic.isPlaying)
+            menuMusic.Stop();
+            
+        // Set the target scene for the loading screen
+        PlayerPrefs.SetString("SceneToLoad", "Map2_AngkorWat");
+        PlayerPrefs.Save();
+        
+        // Load the loading scene
+        SceneManager.LoadScene("LoadingScene");
     }
 
     // Return to Main Menu
