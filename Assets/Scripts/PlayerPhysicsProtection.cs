@@ -63,6 +63,8 @@ public class PlayerPhysicsProtection : MonoBehaviour
     private float positionCheckTimer = 0f;
     private float groundCheckTimer = 0f;
     private int consecutiveNoGroundFrames = 0;
+    private float lastRespawnTime = -10f; // Cooldown tracking
+    private const float RESPAWN_COOLDOWN = 2f; // Minimum 2 seconds between respawns
 
     void Start()
     {
@@ -71,8 +73,8 @@ public class PlayerPhysicsProtection : MonoBehaviour
         // If ground layers not set, use Default and Terrain
         if (groundLayers == 0)
         {
-            // Include Default (0), Terrain, Ground layers
-            groundLayers = LayerMask.GetMask("Default", "Terrain", "Ground");
+            // Include Default (0), Terrain, Ground, Environment layers (modular terrain tiles may be on Environment)
+            groundLayers = LayerMask.GetMask("Default", "Terrain", "Ground", "Environment");
             if (groundLayers == 0)
             {
                 groundLayers = 1; // At minimum, use Default layer
@@ -100,10 +102,20 @@ public class PlayerPhysicsProtection : MonoBehaviour
                 safeRespawnPosition = spawnPoint.transform.position + Vector3.up * 1f;
                 if (showDebugLogs) Debug.Log($"✅ Found spawn point at {safeRespawnPosition}");
             }
+            else
+            {
+                // No SpawnPoint found - use current player position as safe respawn
+                // This is usually the starting position when the scene loads
+                safeRespawnPosition = transform.position + Vector3.up * 2f;
+                // Only log this once in debug mode - not a critical warning
+                if (showDebugLogs) Debug.Log($"📍 No SpawnPoint found. Using player start position: {safeRespawnPosition}");
+            }
         }
         catch (System.Exception)
         {
-            if (showDebugLogs) Debug.LogWarning($"⚠️ Tag '{spawnPointTag}' not defined. Using default spawn.");
+            // Tag doesn't exist - use player's current position
+            safeRespawnPosition = transform.position + Vector3.up * 2f;
+            // Suppress this warning - it's expected if no SpawnPoint is set up
         }
     }
 
@@ -194,13 +206,19 @@ public class PlayerPhysicsProtection : MonoBehaviour
             isGroundDetected = false;
             
             // If no ground detected and we're not jumping intentionally
-            if (consecutiveNoGroundFrames > 10 && !characterController.isGrounded)
+            // FIXED: Much less aggressive - only trigger for REAL falls into void
+            if (consecutiveNoGroundFrames > 30 && !characterController.isGrounded)
             {
-                // We might be falling through - check if we were recently grounded
-                if (Time.time - lastGroundedTime < 0.5f && transform.position.y < lastGroundY - 2f)
+                // We might be falling through - check if we fell a significant distance quickly
+                // Threshold increased from 2 to 8 units to prevent false positives
+                if (Time.time - lastGroundedTime < 0.3f && transform.position.y < lastGroundY - 8f)
                 {
-                    if (showDebugLogs) Debug.LogWarning($"⚠️ Sudden fall detected! Was at Y={lastGroundY:F1}, now at Y={transform.position.y:F1}");
-                    ForceRespawn();
+                    // Only respawn if we're not on cooldown
+                    if (Time.time - lastRespawnTime > RESPAWN_COOLDOWN)
+                    {
+                        if (showDebugLogs) Debug.LogWarning($"⚠️ Sudden fall detected! Was at Y={lastGroundY:F1}, now at Y={transform.position.y:F1}");
+                        ForceRespawn();
+                    }
                 }
             }
         }
@@ -257,46 +275,79 @@ public class PlayerPhysicsProtection : MonoBehaviour
 
     /// <summary>
     /// Force respawn - guaranteed to work
+    /// ENHANCED: Spawns higher, resets physics completely, uses delay for stability
     /// </summary>
     public void ForceRespawn()
     {
+        // CRITICAL: Check cooldown to prevent respawn loops
+        if (Time.time - lastRespawnTime < RESPAWN_COOLDOWN)
+        {
+            if (showDebugLogs) Debug.Log("⏳ Respawn on cooldown, skipping...");
+            return;
+        }
+        
+        lastRespawnTime = Time.time;
+        
         if (showDebugLogs) Debug.Log("🔄 FORCE RESPAWN TRIGGERED");
         
-        // Disable controller to allow teleport
+        // Start the respawn coroutine for clean physics reset
+        StartCoroutine(RespawnCoroutine());
+    }
+    
+    /// <summary>
+    /// Coroutine-based respawn for cleaner physics reset
+    /// </summary>
+    private System.Collections.IEnumerator RespawnCoroutine()
+    {
+        // STEP 1: Disable the CharacterController to allow direct transform manipulation
         characterController.enabled = false;
         
-        // Determine best respawn position
-        Vector3 targetPos = safeRespawnPosition;
+        // STEP 2: Determine best respawn position
+        Vector3 targetPos = safeRespawnPosition + Vector3.up * 2f; // Spawn 2 units HIGHER
         
         // Check if last grounded position is still valid
         if (lastGroundedPosition.y > voidYThreshold + 2f)
         {
             // Verify the position is actually safe with a raycast
-            if (Physics.Raycast(lastGroundedPosition + Vector3.up * 2f, Vector3.down, out RaycastHit hit, 5f, groundLayers))
+            Vector3 checkPos = lastGroundedPosition + Vector3.up * 5f;
+            if (Physics.Raycast(checkPos, Vector3.down, out RaycastHit hit, 10f, groundLayers))
             {
-                targetPos = hit.point + Vector3.up * 1f;
+                // Spawn 2 units above the ground to prevent clipping
+                targetPos = hit.point + Vector3.up * 2f;
             }
             else
             {
-                targetPos = lastGroundedPosition + Vector3.up * 1f;
+                targetPos = lastGroundedPosition + Vector3.up * 2f;
             }
         }
         
-        // Teleport player
+        // STEP 3: Immediately teleport player
         transform.position = targetPos;
         
-        // Re-enable controller
+        // STEP 4: Wait one physics frame to let Unity settle
+        yield return new WaitForFixedUpdate();
+        
+        // STEP 5: Teleport again (in case of any physics shenanigans)
+        transform.position = targetPos;
+        
+        // STEP 6: Re-enable the CharacterController
         characterController.enabled = true;
         
-        // Reset all tracking
+        // STEP 7: Immediately move down slightly to "ground" the player
+        // This prevents the CharacterController from thinking it's falling
+        characterController.Move(Vector3.down * 0.1f);
+        
+        // STEP 8: Reset all tracking variables
         currentAirTime = 0f;
         lastGroundedTime = Time.time;
         lastGroundY = targetPos.y;
         lastGroundedPosition = targetPos;
         consecutiveNoGroundFrames = 0;
+        isGroundDetected = true;
         
         if (showDebugLogs) Debug.Log($"✅ Player respawned at {targetPos}");
     }
+
     
     /// <summary>
     /// Public method to manually trigger respawn
