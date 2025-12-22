@@ -98,7 +98,6 @@ public class EnemyCollisionDetector : MonoBehaviour
     
     /// <summary>
     /// Backup: Check if player is within range and deal damage
-    /// FIXED: Only deal damage if enemy is actually attacking (not just running nearby)
     /// </summary>
     private void CheckProximityDamage()
     {
@@ -114,21 +113,7 @@ public class EnemyCollisionDetector : MonoBehaviour
         
         if (distance <= proximityRange)
         {
-            // IMPORTANT: Check if enemy is actually attacking (stopped moving)
-            // Don't deal damage while enemy is still running toward player
-            EnemyAI enemyAI = transform.root.GetComponent<EnemyAI>();
-            if (enemyAI != null)
-            {
-                // Check if enemy's NavMeshAgent is stopped (meaning they're in attack mode)
-                UnityEngine.AI.NavMeshAgent agent = transform.root.GetComponent<UnityEngine.AI.NavMeshAgent>();
-                if (agent != null && !agent.isStopped)
-                {
-                    // Enemy is still moving - don't deal damage yet
-                    return;
-                }
-            }
-            
-            // Within range AND attacking - try to deal damage
+            // Within range - try to deal damage
             if (Time.time - lastDamageTime >= damageCooldown)
             {
                 DealDamageToPlayer(playerTransform.gameObject);
