@@ -81,7 +81,6 @@ public class WizardSpellSystem : MonoBehaviour
     private float lastLightSpellTime = -999f;
     private float lastHeavySpellTime = -999f;
     private Transform currentTarget;
-    private bool isCasting = false;
 
     void Start()
     {
@@ -152,8 +151,6 @@ public class WizardSpellSystem : MonoBehaviour
 
     public void CastSpell(SpellType spellType, bool isInAir = false)
     {
-        isCasting = true;
-
         // Calculate damage
         float damage = spellType == SpellType.Heavy ? heavySpellDamage : lightSpellDamage;
         if (isInAir) damage *= airSpellMultiplier;
@@ -213,8 +210,6 @@ public class WizardSpellSystem : MonoBehaviour
                 Destroy(projectile, 5f);
             }
         }
-
-        isCasting = false;
     }
 
     private Vector3 GetTargetDirection()

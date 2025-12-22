@@ -17,9 +17,28 @@ public class MenuScreen : MonoBehaviour
         
     }
 
-    // Method to load the village map scene when play button is clicked
+    // Method to load the loading scene when play button is clicked
     public void PlayGame()
     {
-        SceneManager.LoadScene("VilageMapScene");
+        // Set the target scene for the loading screen
+        PlayerPrefs.SetString("SceneToLoad", "VilageMapScene");
+        PlayerPrefs.Save();
+        
+        // Load the loading scene
+        SceneManager.LoadScene("LoadingScene");
+    }
+    
+    // Optional: Quit game
+    public void QuitGame()
+    {
+        Debug.Log("Quitting game...");
+        Application.Quit();
+    }
+    
+    // Optional: Open settings
+    public void OpenSettings()
+    {
+        Debug.Log("Open settings menu");
+        // Add your settings menu logic here
     }
 }

@@ -76,10 +76,18 @@ public class UIManager : MonoBehaviour
             // Subscribe to wave changes to show HUD
             if (waveManager.OnWaveChange != null)
                 waveManager.OnWaveChange.AddListener(OnWaveStarted);
+                
+            // If game already started (on restart), show HUD immediately
+            if (waveManager.currentWave > 0)
+            {
+                ShowHUD();
+            }
         }
         else
         {
             Debug.LogWarning("UIManager: WaveManager NOT found in scene!");
+            // If no WaveManager, show HUD by default
+            ShowHUD();
         }
         
         // Find and subscribe to Player's health and stats
@@ -87,6 +95,22 @@ public class UIManager : MonoBehaviour
         
         if (gameOverPanel) gameOverPanel.SetActive(false);
         if (victoryPanel) victoryPanel.SetActive(false);
+    }
+    
+    /// <summary>
+    /// Show all HUD elements
+    /// </summary>
+    private void ShowHUD()
+    {
+        Debug.Log("UIManager: Showing HUD elements");
+        
+        if (scoreContainer) scoreContainer.SetActive(true);
+        else if (scoreText) scoreText.gameObject.SetActive(true);
+
+        if (timerContainer) timerContainer.SetActive(true);
+        else if (timerText) timerText.gameObject.SetActive(true);
+        
+        if (playerStatsContainer) playerStatsContainer.SetActive(true);
     }
     
     /// <summary>
@@ -107,7 +131,9 @@ public class UIManager : MonoBehaviour
             if (playerHealth != null)
             {
                 playerHealth.OnHealthChanged.AddListener(UpdateHealthUI);
-                Debug.Log("UIManager: Connected to Player HealthSystem");
+                // IMPORTANT: Force initial update
+                UpdateHealthUI(playerHealth.CurrentHealth, playerHealth.maxHealth);
+                Debug.Log($"UIManager: Connected to Player HealthSystem - HP: {playerHealth.CurrentHealth}/{playerHealth.maxHealth}");
             }
             
             // Connect to PlayerStats
@@ -117,31 +143,48 @@ public class UIManager : MonoBehaviour
                 playerStats.OnLevelUp.AddListener(OnPlayerLevelUp);
                 playerStats.OnExpChanged.AddListener(UpdateExperienceUI);
                 
-                // Initial update
+                // Initial updates
                 UpdateLevelUI(playerStats.CurrentLevel);
+                UpdateExperienceUI(playerStats.CurrentExp, playerStats.ExpToNextLevel);
                 Debug.Log("UIManager: Connected to PlayerStats");
             }
+            
+            // Show player stats container
+            if (playerStatsContainer != null)
+            {
+                playerStatsContainer.SetActive(true);
+            }
+            
+            // Show HUD after a short delay to ensure everything is ready
+            Invoke(nameof(ShowHUD), 0.2f);
         }
         else
         {
-            Debug.LogWarning("UIManager: Player not found! Health bar won't update.");
+            Debug.LogWarning("UIManager: Player not found! Retrying in 0.5s...");
+            // Retry after a short delay (player might spawn later)
+            Invoke(nameof(RetryConnectToPlayer), 0.5f);
+        }
+    }
+    
+    /// <summary>
+    /// Retry connecting to player if not found initially
+    /// </summary>
+    private void RetryConnectToPlayer()
+    {
+        if (playerHealth == null || playerStats == null)
+        {
+            Debug.Log("UIManager: Retrying player connection...");
+            ConnectToPlayer();
         }
     }
 
     private void OnWaveStarted(int waveNumber)
     {
-        // Show Score and Timer once Wave 1 starts
+        // Show HUD when Wave 1 starts
         if (waveNumber == 1)
         {
             Debug.Log("UIManager: Wave 1 started. Showing HUD.");
-            if (scoreContainer) scoreContainer.SetActive(true);
-            else if (scoreText) scoreText.gameObject.SetActive(true);
-
-            if (timerContainer) timerContainer.SetActive(true);
-            else if (timerText) timerText.gameObject.SetActive(true);
-            
-            // Also show player stats
-            if (playerStatsContainer) playerStatsContainer.SetActive(true);
+            ShowHUD();
         }
     }
 
@@ -226,9 +269,15 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void UpdateHealthUI(float current, float max)
     {
+        Debug.Log($"UIManager: UpdateHealthUI called - {current}/{max}");
+        
         if (healthBar != null)
         {
             healthBar.value = current / max;
+        }
+        else
+        {
+            Debug.LogWarning("UIManager: Health bar is null!");
         }
         
         if (healthText != null)
@@ -330,6 +379,70 @@ public class UIManager : MonoBehaviour
         {
             timerText.color = activate ? Color.red : Color.white;
         }
+    }
+
+    // ========== GAME OVER / RESTART BUTTONS ==========
+    
+    /// <summary>
+    /// Restart the current level (call this from Restart button)
+    /// </summary>
+    public void RestartGame()
+    {
+        Debug.Log("🔄 Restarting game...");
+        
+        // Reset time scale
+        Time.timeScale = 1f;
+        
+        // Load current scene through loading screen
+        string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        SceneTransitionManager.Instance.LoadSceneWithLoading(currentScene);
+    }
+
+    /// <summary>
+    /// Go back to main menu (call this from Menu button)
+    /// </summary>
+    public void BackToMainMenu()
+    {
+        Debug.Log("🏠 Returning to main menu...");
+        
+        // Reset time scale
+        Time.timeScale = 1f;
+        
+        // Load menu scene
+        SceneTransitionManager.Instance.LoadSceneDirect("MenuScence");
+    }
+
+    /// <summary>
+    /// Continue to next level (call this from Victory panel)
+    /// </summary>
+    public void ContinueToNextLevel()
+    {
+        Debug.Log("➡️ Loading next level...");
+        
+        // Reset time scale
+        Time.timeScale = 1f;
+        
+        // Load next level (you can modify this based on your level progression)
+        string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        
+        if (currentScene == "VilageMapScene")
+        {
+            SceneTransitionManager.Instance.LoadSceneWithLoading("Map2_AngkorWat");
+        }
+        else
+        {
+            // Default: back to village
+            SceneTransitionManager.Instance.LoadSceneWithLoading("VilageMapScene");
+        }
+    }
+
+    /// <summary>
+    /// Quit the game (call this from Quit button)
+    /// </summary>
+    public void QuitGame()
+    {
+        Debug.Log("👋 Quitting game...");
+        SceneTransitionManager.Instance.QuitGame();
     }
 }
 
