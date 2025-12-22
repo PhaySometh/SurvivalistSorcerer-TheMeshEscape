@@ -148,9 +148,8 @@ public class PlayerMovementScript : MonoBehaviour
         // Keep the existing Y velocity (Gravity/Jump)
         float movementDirectionY = moveDirection.y;
         
-        // Apply calculated speed - ENSURE horizontal movement is truly horizontal
+        // Apply calculated speed
         Vector3 horizontalMove = desiredMove.normalized * currentSpeed * (inputDir.magnitude > 1 ? 1 : inputDir.magnitude);
-        horizontalMove.y = 0f; // Force Y to zero for horizontal movement
         moveDirection = new Vector3(horizontalMove.x, 0f, horizontalMove.z);
 
         // 5. Handle Jump
@@ -203,37 +202,10 @@ public class PlayerMovementScript : MonoBehaviour
         if (!isActuallyGrounded)
         {
             moveDirection.y -= gravity * Time.deltaTime;
-            
-            // Clamp maximum fall speed to prevent physics issues
-            moveDirection.y = Mathf.Max(moveDirection.y, -50f);
-        }
-        else
-        {
-            // When grounded, apply small downward force to keep player grounded
-            // This prevents "floating" on slopes and uneven terrain
-            if (moveDirection.y < 0)
-            {
-                moveDirection.y = -2f; // Small constant downward force
-            }
         }
 
-        // 7. Move the Controller - ONLY if enabled (prevents errors during respawn)
-        if (characterController.enabled)
-        {
-            characterController.Move(moveDirection * Time.deltaTime);
-        }
-        
-        // 7.5 SKY-WALK PREVENTION: Check if we're rising when we shouldn't be
-        // If player is moving upward but not jumping and not on a slope, force them down
-        if (characterController.enabled && characterController.velocity.y > 0.5f && !Input.GetButton("Jump"))
-        {
-            // Check if there's ground below us
-            if (!Physics.Raycast(transform.position + Vector3.up * 0.1f, Vector3.down, 2f))
-            {
-                // No ground below - we're walking into the sky! Apply extra gravity
-                characterController.Move(Vector3.down * gravity * Time.deltaTime);
-            }
-        }
+        // 7. Move the Controller
+        characterController.Move(moveDirection * Time.deltaTime);
 
         // 8. Rotate Character to face movement
         Vector3 flatMove = new Vector3(moveDirection.x, 0f, moveDirection.z);
