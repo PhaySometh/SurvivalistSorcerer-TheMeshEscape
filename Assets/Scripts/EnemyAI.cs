@@ -5,7 +5,7 @@ using UnityEngine.AI;
 
 /// <summary>
 /// Simple Enemy AI for chase game
-/// Enemy patrols the environment and chases the player when detected
+/// FIXED: Added animator safety checks to prevent console spam errors
 /// </summary>
 public class EnemyAI : MonoBehaviour
 {
@@ -15,7 +15,7 @@ public class EnemyAI : MonoBehaviour
     public Transform player;
 
     [Header("Combat Settings")]
-    public float attackRange = 1.5f; // Smaller default for small enemies
+    public float attackRange = 1.5f;
     public float attackCooldown = 2.0f;
     private float nextAttackTime = 0f;
     private bool isDead = false;
@@ -29,39 +29,81 @@ public class EnemyAI : MonoBehaviour
     public string dieState = "die";
 
     private string lastAnimationState = "";
+    
+    // Cache valid parameters to avoid repeated lookups
+    private HashSet<string> validTriggers = new HashSet<string>();
+    private HashSet<int> validStateHashes = new HashSet<int>();
+    private bool animatorValidated = false;
 
     private void Awake()
     {
-        // Get components
         agent = GetComponent<NavMeshAgent>();
         if (anim == null) anim = GetComponent<Animator>();
         
-        // Find player automatically
         if (player == null)
         {
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
             if (playerObj != null)
                 player = playerObj.transform;
             else
-                player = GameObject.Find("Player").transform;
+            {
+                GameObject foundPlayer = GameObject.Find("Player");
+                if (foundPlayer != null) player = foundPlayer.transform;
+            }
         }
 
-        // Validate setup
         if (agent == null)
-            Debug.LogError("NavMeshAgent component missing on " + gameObject.name);
-        if (player == null)
-            Debug.LogError("Player not found!");
+            Debug.LogError($"NavMeshAgent missing on {gameObject.name}");
     }
 
     private void Start()
     {
-        // Subscribe to HealthSystem for feedback animations
+        // Validate animator parameters ONCE at start
+        ValidateAnimator();
+        
         HealthSystem health = GetComponent<HealthSystem>();
         if (health != null)
         {
             health.OnTakeDamage.AddListener(PlayDamageAnimation);
             health.OnDeath.AddListener(PlayDeathAnimation);
         }
+    }
+    
+    /// <summary>
+    /// Cache all valid animator parameters and states at startup
+    /// This prevents repeated lookups and console spam
+    /// </summary>
+    private void ValidateAnimator()
+    {
+        if (anim == null || anim.runtimeAnimatorController == null)
+        {
+            animatorValidated = false;
+            return;
+        }
+        
+        // Cache all trigger parameters
+        foreach (AnimatorControllerParameter param in anim.parameters)
+        {
+            if (param.type == AnimatorControllerParameterType.Trigger)
+            {
+                validTriggers.Add(param.name);
+            }
+        }
+        
+        // Cache valid state hashes for layer 0
+        string[] statesToCheck = { idleState, runState, damageState, dieState, 
+                                   attackStatePrefix + "1", attackStatePrefix + "2", attackStatePrefix + "3" };
+        
+        foreach (string stateName in statesToCheck)
+        {
+            int hash = Animator.StringToHash(stateName);
+            if (anim.HasState(0, hash))
+            {
+                validStateHashes.Add(hash);
+            }
+        }
+        
+        animatorValidated = true;
     }
 
     private void Update()
@@ -90,60 +132,84 @@ public class EnemyAI : MonoBehaviour
             ChasePlayer();
         }
 
-        // Update movement animation state
         UpdateMovementAnimation();
     }
 
     private void UpdateMovementAnimation()
     {
-        if (anim == null) return;
+        if (anim == null || !animatorValidated) return;
 
         float currentSpeed = agent.velocity.magnitude;
         
         if (currentSpeed > 0.1f)
         {
-            PlayAnimation(runState);
+            SafePlayAnimation(runState);
         }
         else
         {
-            PlayAnimation(idleState);
+            SafePlayAnimation(idleState);
         }
     }
 
-    private void PlayAnimation(string stateName)
+    /// <summary>
+    /// Safely play animation - NO CONSOLE ERRORS
+    /// Only triggers animations that have been validated to exist
+    /// </summary>
+    private void SafePlayAnimation(string stateName)
     {
+        if (anim == null || string.IsNullOrEmpty(stateName)) return;
         if (lastAnimationState == stateName) return;
 
         if (useTriggers)
         {
-            anim.SetTrigger(stateName);
+            // Only call SetTrigger if we KNOW this trigger exists
+            if (validTriggers.Contains(stateName))
+            {
+                anim.SetTrigger(stateName);
+                lastAnimationState = stateName;
+            }
         }
         else
         {
-            anim.CrossFade(stateName, 0.1f);
+            // Only call CrossFade if we KNOW this state exists
+            int hash = Animator.StringToHash(stateName);
+            if (validStateHashes.Contains(hash))
+            {
+                anim.CrossFade(hash, 0.1f, 0); // Layer 0 explicitly - FIXES Invalid Layer Index error
+                lastAnimationState = stateName;
+            }
         }
-        
-        lastAnimationState = stateName;
     }
 
     private void AttackPlayer()
     {
-        // Stop moving
-        agent.isStopped = true;
-        agent.velocity = Vector3.zero;
+        if (agent.isActiveAndEnabled && agent.isOnNavMesh)
+        {
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
+        }
 
         if (Time.time >= nextAttackTime)
         {
-            if (anim != null)
+            if (anim != null && animatorValidated)
             {
-                // Randomly pick one of the 3 attack animations
                 int attackRoll = Random.Range(1, 4);
                 string attackTrigger = attackStatePrefix + attackRoll.ToString();
                 
-                if (useTriggers) anim.SetTrigger(attackTrigger);
-                else anim.CrossFade(attackTrigger, 0.1f);
-                
-                lastAnimationState = "attacking";
+                if (useTriggers && validTriggers.Contains(attackTrigger))
+                {
+                    anim.SetTrigger(attackTrigger);
+                    lastAnimationState = "attacking";
+                }
+                else if (!useTriggers)
+                {
+                    int hash = Animator.StringToHash(attackTrigger);
+                    if (validStateHashes.Contains(hash))
+                    {
+                        anim.CrossFade(hash, 0.1f, 0); // Layer 0 explicitly
+                        lastAnimationState = "attacking";
+                    }
+                }
             }
             nextAttackTime = Time.time + attackCooldown;
         }
@@ -151,46 +217,63 @@ public class EnemyAI : MonoBehaviour
 
     private void ChasePlayer()
     {
-        agent.isStopped = false;
-        agent.SetDestination(player.position);
-        
-        // Removed the 0.5s delay to make the boss attack instantly when it catches the player
-        
-        Debug.DrawLine(transform.position, player.position, Color.red);
+        if (agent.isActiveAndEnabled && agent.isOnNavMesh)
+        {
+            agent.isStopped = false;
+            agent.SetDestination(player.position);
+        }
     }
 
     private void PlayDamageAnimation()
     {
-        if (anim != null && !isDead)
+        if (anim == null || isDead || !animatorValidated) return;
+        
+        if (useTriggers && validTriggers.Contains(damageState))
         {
-            if (useTriggers) anim.SetTrigger(damageState);
-            else anim.CrossFade(damageState, 0.1f);
-            
+            anim.SetTrigger(damageState);
             lastAnimationState = "damage";
+        }
+        else if (!useTriggers)
+        {
+            int hash = Animator.StringToHash(damageState);
+            if (validStateHashes.Contains(hash))
+            {
+                anim.CrossFade(hash, 0.1f, 0);
+                lastAnimationState = "damage";
+            }
         }
     }
 
     private void PlayDeathAnimation()
     {
         isDead = true;
-        if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh) agent.isStopped = true;
         
-        if (anim != null)
+        if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
         {
-            if (useTriggers) anim.SetTrigger(dieState);
-            else anim.CrossFade(dieState, 0.1f);
-            
+            agent.isStopped = true;
+        }
+        
+        if (anim == null || !animatorValidated) return;
+        
+        if (useTriggers && validTriggers.Contains(dieState))
+        {
+            anim.SetTrigger(dieState);
             lastAnimationState = "dead";
+        }
+        else if (!useTriggers)
+        {
+            int hash = Animator.StringToHash(dieState);
+            if (validStateHashes.Contains(hash))
+            {
+                anim.CrossFade(hash, 0.1f, 0);
+                lastAnimationState = "dead";
+            }
         }
     }
 
-
-    /// <summary>
-    /// Draw gizmos for debugging
-    /// </summary>
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = new Color(1, 1, 0, 0.3f); // Yellow
+        Gizmos.color = new Color(1, 1, 0, 0.3f);
         Gizmos.DrawWireSphere(transform.position, attackRange);
     }
 }
