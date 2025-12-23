@@ -11,6 +11,11 @@ public class WaveManager : MonoBehaviour
     public int totalWaves = 5;
     public float waveDuration = 120f; // 2 minutes soft limit
     public float bufferDuration = 15f; // 15 seconds break
+    
+    private int startWaveIndex = 1; // Which wave to start from
+    private int endWaveIndex = 5;   // Which wave to end at
+    private bool startWithSuddenDeath = false;
+    private int coinsRequired = 0;
 
     [Header("Current Status")]
     public int currentWave = 0; // 0 means not started, 1-5 are waves
@@ -28,8 +33,54 @@ public class WaveManager : MonoBehaviour
 
     void Start()
     {
+        // Load difficulty settings
+        LoadDifficultySettings();
+        
         // Optional: Auto start or wait for player input
         StartCoroutine(StartGameLoop());
+    }
+    
+    /// <summary>
+    /// Load wave configuration based on selected difficulty
+    /// </summary>
+    void LoadDifficultySettings()
+    {
+        if (GameSettings.Instance != null)
+        {
+            WaveConfig config = GameSettings.Instance.GetWaveConfig();
+            
+            totalWaves = config.totalWaves;
+            waveDuration = config.waveDuration;
+            bufferDuration = config.bufferDuration;
+            startWaveIndex = config.startWave;
+            endWaveIndex = config.endWave;
+            startWithSuddenDeath = config.startWithSuddenDeath;
+            coinsRequired = config.coinsRequired;
+            
+            // Apply to GameManager time limit
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.levelTimeLimit = config.timeLimit;
+            }
+            
+            Debug.Log($"Loaded {GameSettings.Instance.currentDifficulty} difficulty: Waves {startWaveIndex}-{endWaveIndex}, {waveDuration}s per wave, {config.timeLimit}s total time");
+            
+            if (startWithSuddenDeath)
+            {
+                Debug.Log("HARD MODE: Sudden death will activate after wave!");
+            }
+            
+            if (coinsRequired > 0)
+            {
+                Debug.Log($"Coin collection required: {coinsRequired} coins");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("GameSettings not found! Using default wave configuration.");
+            startWaveIndex = 1;
+            endWaveIndex = 5;
+        }
     }
 
     IEnumerator StartGameLoop()
@@ -103,8 +154,9 @@ public class WaveManager : MonoBehaviour
 
     void HandleWaveLogic()
     {
-        // DON'T trigger next wave logic if we are already in Wave 5 (Boss Fight)
-        if (currentWave >= totalWaves) return;
+        // Check if we've finished all waves for this difficulty
+        int actualWaveIndex = startWaveIndex + currentWave;
+        if (actualWaveIndex > endWaveIndex) return;
 
         // Scenario A: All enemies dead -> Early buffer
         if (enemySpawner.ActiveEnemyCount == 0 && stateTimer > 0)
@@ -150,20 +202,36 @@ public class WaveManager : MonoBehaviour
         yield return new WaitForSeconds(2f);
         OnStateChange?.Invoke("Prepare yourself...");
         
-        // Only say "Wave X is coming" if there IS a next wave
-        if (currentWave < totalWaves)
+        // Check if there's a next wave
+        int nextActualWaveIndex = startWaveIndex + currentWave;
+        if (nextActualWaveIndex <= endWaveIndex)
         {
             yield return new WaitForSeconds(bufferDuration - 5f);
-            OnStateChange?.Invoke($"Wave {currentWave + 1} is coming!");
+            OnStateChange?.Invoke($"Wave {nextActualWaveIndex} is coming!");
+        }
+        else if (startWithSuddenDeath)
+        {
+            yield return new WaitForSeconds(bufferDuration - 5f);
+            OnStateChange?.Invoke("Get ready for SUDDEN DEATH!");
         }
     }
 
     void StartNextWave()
     {
-        // FIX: Only increment and start if we haven't finished all waves
-        if (currentWave >= totalWaves) 
+        // Calculate which actual wave to spawn
+        int wavesToSpawned = currentWave + 1;
+        int actualWaveIndex = startWaveIndex + currentWave;
+        
+        // Check if we've spawned all waves for this difficulty
+        if (actualWaveIndex > endWaveIndex) 
         {
-            Debug.Log("All waves complete. Waiting for boss death or sudden death.");
+            Debug.Log("All waves complete for this difficulty.");
+            
+            // For hard mode, check if we need to activate sudden death
+            if (startWithSuddenDeath && currentState != WaveState.SuddenDeath)
+            {
+                TriggerSuddenDeath();
+            }
             return;
         }
 
@@ -173,10 +241,10 @@ public class WaveManager : MonoBehaviour
         stateTimer = waveDuration; 
         
         OnWaveChange?.Invoke(currentWave);
-        OnStateChange?.Invoke($"WAVE {currentWave}");
+        OnStateChange?.Invoke($"WAVE {actualWaveIndex}");
 
-        // Start the specialized sequence for this wave
-        StartCoroutine(SpawnWaveSequence(currentWave));
+        // Start the specialized sequence for the actual wave
+        StartCoroutine(SpawnWaveSequence(actualWaveIndex));
     }
 
     IEnumerator SpawnWaveSequence(int wave)
