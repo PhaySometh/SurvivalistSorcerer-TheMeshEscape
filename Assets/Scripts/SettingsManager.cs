@@ -17,15 +17,21 @@ public class SettingsManager : MonoBehaviour
     public Button hardButton;
     public Button defaultButton;
     
+    [Header("Map Buttons")]
+    public Button villageMapButton;
+    public Button level2MapButton;
+    
     [Header("Info Display")]
     public TextMeshProUGUI difficultyInfoText;
     public TextMeshProUGUI currentDifficultyText;
+    public TextMeshProUGUI currentMapText;
     
     [Header("Control Buttons")]
     public Button closeButton;
     public Button applyButton;
     
     private GameSettings.Difficulty selectedDifficulty;
+    private GameSettings.GameMap selectedMap;
     
     void Start()
     {
@@ -46,14 +52,16 @@ public class SettingsManager : MonoBehaviour
             settingsPanel.SetActive(false);
         }
         
-        // Load current difficulty
+        // Load current difficulty and map
         if (GameSettings.Instance != null)
         {
             selectedDifficulty = GameSettings.Instance.currentDifficulty;
+            selectedMap = GameSettings.Instance.currentMap;
         }
         else
         {
             selectedDifficulty = GameSettings.Difficulty.Medium;
+            selectedMap = GameSettings.GameMap.VillageMap;
         }
         
         // Setup button listeners
@@ -93,6 +101,19 @@ public class SettingsManager : MonoBehaviour
             applyButton.onClick.AddListener(ApplySettings);
         }
         
+        // Setup map button listeners
+        if (villageMapButton != null)
+        {
+            villageMapButton.onClick.RemoveAllListeners();
+            villageMapButton.onClick.AddListener(() => SelectMap(GameSettings.GameMap.VillageMap));
+        }
+        
+        if (level2MapButton != null)
+        {
+            level2MapButton.onClick.RemoveAllListeners();
+            level2MapButton.onClick.AddListener(() => SelectMap(GameSettings.GameMap.Level2Map));
+        }
+        
         UpdateUI();
     }
     
@@ -109,6 +130,7 @@ public class SettingsManager : MonoBehaviour
             if (GameSettings.Instance != null)
             {
                 selectedDifficulty = GameSettings.Instance.currentDifficulty;
+                selectedMap = GameSettings.Instance.currentMap;
             }
             
             UpdateUI();
@@ -140,6 +162,16 @@ public class SettingsManager : MonoBehaviour
     }
     
     /// <summary>
+    /// Select a map
+    /// </summary>
+    void SelectMap(GameSettings.GameMap map)
+    {
+        selectedMap = map;
+        UpdateUI();
+        Debug.Log($"Selected map: {map}");
+    }
+    
+    /// <summary>
     /// Apply and save the selected settings
     /// </summary>
     void ApplySettings()
@@ -152,10 +184,11 @@ public class SettingsManager : MonoBehaviour
             settingsObj.AddComponent<GameSettings>();
         }
         
-        // Apply the difficulty
+        // Apply the difficulty and map
         GameSettings.Instance.SetDifficulty(selectedDifficulty);
+        GameSettings.Instance.SetMap(selectedMap);
         
-        Debug.Log($"Settings applied! Difficulty: {selectedDifficulty}");
+        Debug.Log($"Settings applied! Difficulty: {selectedDifficulty}, Map: {selectedMap}");
         
         // Show feedback with coroutine
         StartCoroutine(ShowSaveConfirmation());
@@ -184,6 +217,11 @@ public class SettingsManager : MonoBehaviour
             currentDifficultyText.color = originalColor;
         }
         
+        if (currentMapText != null)
+        {
+            currentMapText.text = $"Current Map: {GameSettings.Instance.GetMapDisplayName()}";
+        }
+        
         // Optional: Close panel after showing confirmation
         // yield return new WaitForSeconds(0.5f);
         // CloseSettings();
@@ -206,8 +244,16 @@ public class SettingsManager : MonoBehaviour
             currentDifficultyText.text = $"Current: {selectedDifficulty}";
         }
         
-        // Highlight selected button
+        // Update current map display
+        if (currentMapText != null)
+        {
+            string mapName = selectedMap == GameSettings.GameMap.VillageMap ? "Village Map" : "Level 2";
+            currentMapText.text = $"Current Map: {mapName}";
+        }
+        
+        // Highlight selected buttons
         HighlightButton(selectedDifficulty);
+        HighlightMapButton(selectedMap);
     }
     
     /// <summary>
@@ -256,6 +302,27 @@ public class SettingsManager : MonoBehaviour
             ColorBlock colors = button.colors;
             colors.normalColor = Color.white;
             button.colors = colors;
+        }
+    }
+    
+    /// <summary>
+    /// Highlight the selected map button
+    /// </summary>
+    void HighlightMapButton(GameSettings.GameMap map)
+    {
+        // Reset all map buttons
+        ResetButtonColor(villageMapButton);
+        ResetButtonColor(level2MapButton);
+        
+        // Highlight selected
+        switch (map)
+        {
+            case GameSettings.GameMap.VillageMap:
+                SetButtonHighlight(villageMapButton);
+                break;
+            case GameSettings.GameMap.Level2Map:
+                SetButtonHighlight(level2MapButton);
+                break;
         }
     }
     
