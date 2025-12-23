@@ -54,8 +54,20 @@ public class CoinSpawner : MonoBehaviour
             Vector3 randomPos = GetRandomPositionNearPlayer();
             if (randomPos != Vector3.zero)
             {
-                Instantiate(coinPrefab, randomPos + Vector3.up * spawnHeightOffset, Quaternion.identity, transform);
+                // Spawn coin at ground level (randomPos already has the correct Y from raycast)
+                Instantiate(coinPrefab, randomPos, Quaternion.identity, transform);
             }
+        }
+    }
+    
+    /// <summary>
+    /// Spawn a single coin at a specific position (for enemy drops)
+    /// </summary>
+    public void SpawnCoinAt(Vector3 position)
+    {
+        if (coinPrefab != null)
+        {
+            Instantiate(coinPrefab, position, Quaternion.identity, transform);
         }
     }
 

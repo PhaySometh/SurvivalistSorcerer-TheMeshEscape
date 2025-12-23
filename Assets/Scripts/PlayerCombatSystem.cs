@@ -27,6 +27,16 @@ public class PlayerCombatSystem : MonoBehaviour
     [Tooltip("Minimum time between attacks (prevents spam)")]
     public float attackCooldown = 0.3f;
 
+    [Header("Targeting")]
+    [Tooltip("Auto-rotate to face nearest enemy when attacking")]
+    public bool autoFaceEnemy = true;
+    
+    [Tooltip("Maximum distance to search for enemies to face")]
+    public float targetSearchRadius = 10f;
+    
+    [Tooltip("How fast to rotate towards enemy")]
+    public float rotationSpeed = 20f;
+
     [Header("Weapon Hitbox")]
     [Tooltip("Transform representing the weapon/hand position")]
     public Transform weaponHitboxCenter;
@@ -152,6 +162,12 @@ public class PlayerCombatSystem : MonoBehaviour
     /// </summary>
     public void PerformAttack(AttackType attackType)
     {
+        // Face nearest enemy before attacking
+        if (autoFaceEnemy)
+        {
+            FaceNearestEnemy();
+        }
+        
         bool isInAir = !characterController.isGrounded;
         
         // Determine attack index for animation
@@ -350,6 +366,55 @@ public class PlayerCombatSystem : MonoBehaviour
     private void ResetCombo()
     {
         currentComboCount = 0;
+    }
+    
+    /// <summary>
+    /// Find and face the nearest enemy
+    /// </summary>
+    private void FaceNearestEnemy()
+    {
+        // Find all colliders in range
+        Collider[] nearbyColliders = Physics.OverlapSphere(transform.position, targetSearchRadius);
+        
+        GameObject nearestEnemy = null;
+        float nearestDistance = float.MaxValue;
+        
+        foreach (Collider col in nearbyColliders)
+        {
+            // Check if this is an enemy
+            if (CheckIfEnemy(col.gameObject))
+            {
+                // Check if enemy is alive
+                HealthSystem health = col.GetComponent<HealthSystem>();
+                if (health == null) health = col.GetComponentInParent<HealthSystem>();
+                
+                if (health != null && !health.IsDead)
+                {
+                    float distance = Vector3.Distance(transform.position, col.transform.position);
+                    if (distance < nearestDistance)
+                    {
+                        nearestDistance = distance;
+                        nearestEnemy = col.gameObject;
+                    }
+                }
+            }
+        }
+        
+        // Rotate to face the nearest enemy
+        if (nearestEnemy != null)
+        {
+            Vector3 directionToEnemy = nearestEnemy.transform.position - transform.position;
+            directionToEnemy.y = 0; // Keep rotation on horizontal plane only
+            
+            if (directionToEnemy != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(directionToEnemy);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                
+                // For immediate facing (optional - makes attack feel more responsive)
+                transform.rotation = targetRotation;
+            }
+        }
     }
 
     /// <summary>

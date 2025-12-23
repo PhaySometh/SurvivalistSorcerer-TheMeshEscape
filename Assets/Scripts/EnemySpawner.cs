@@ -15,6 +15,13 @@ public class EnemySpawner : MonoBehaviour
     public float spawnRadius = 20f;
     public float minSpawnDistance = 10f;
 
+    [Header("Coin Drops")]
+    public GameObject coinPrefab;
+    [Tooltip("Number of coins to drop when enemy dies")]
+    public int coinsPerEnemy = 3;
+    [Tooltip("Radius around enemy to scatter coins")]
+    public float coinDropRadius = 2f;
+    
     [Header("Tracking")]
     public List<GameObject> activeEnemies = new List<GameObject>();
     public int ActiveEnemyCount => activeEnemies.Count;
@@ -157,14 +164,37 @@ public class EnemySpawner : MonoBehaviour
         {
             GameObject newEnemy = Instantiate(prefab, spawnPos, Quaternion.identity);
             
-            // Track enemy death to update count
+            // Track enemy death to update count and drop coins
             HealthSystem health = newEnemy.GetComponent<HealthSystem>();
             if (health != null)
             {
-                health.OnDeath.AddListener(() => RemoveEnemy(newEnemy));
+                health.OnDeath.AddListener(() => OnEnemyDeath(newEnemy));
             }
             
             activeEnemies.Add(newEnemy);
+        }
+    }
+
+    void OnEnemyDeath(GameObject enemy)
+    {
+        // Remove from active list
+        RemoveEnemy(enemy);
+        
+        // Drop coins at enemy position
+        DropCoins(enemy.transform.position);
+    }
+    
+    void DropCoins(Vector3 position)
+    {
+        if (coinPrefab == null) return;
+        
+        for (int i = 0; i < coinsPerEnemy; i++)
+        {
+            // Scatter coins in a circle around the enemy
+            Vector2 randomCircle = Random.insideUnitCircle * coinDropRadius;
+            Vector3 coinPos = position + new Vector3(randomCircle.x, 0.5f, randomCircle.y);
+            
+            Instantiate(coinPrefab, coinPos, Quaternion.identity);
         }
     }
 

@@ -11,7 +11,7 @@ public class PlayerStats : MonoBehaviour
 {
     [Header("Base Stats")]
     [Tooltip("Starting maximum health")]
-    public float baseMaxHealth = 100f;
+    public float baseMaxHealth = 150f;
     
     [Tooltip("Starting attack damage")]
     public float baseAttackDamage = 25f;

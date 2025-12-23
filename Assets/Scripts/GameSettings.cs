@@ -7,9 +7,11 @@ using UnityEngine;
 public class GameSettings : MonoBehaviour
 {
     public enum Difficulty { Easy, Medium, Hard, Default }
+    public enum GameMap { VillageMap, Level2Map }
     
     [Header("Current Settings")]
     public Difficulty currentDifficulty = Difficulty.Medium;
+    public GameMap currentMap = GameMap.VillageMap;
     
     // Singleton
     public static GameSettings Instance { get; private set; }
@@ -111,11 +113,22 @@ public class GameSettings : MonoBehaviour
     }
     
     /// <summary>
+    /// Set map and save
+    /// </summary>
+    public void SetMap(GameMap map)
+    {
+        currentMap = map;
+        SaveSettings();
+        Debug.Log($"Map set to: {map}");
+    }
+    
+    /// <summary>
     /// Save settings to PlayerPrefs
     /// </summary>
     public void SaveSettings()
     {
         PlayerPrefs.SetInt("GameDifficulty", (int)currentDifficulty);
+        PlayerPrefs.SetInt("GameMap", (int)currentMap);
         PlayerPrefs.Save();
     }
     
@@ -135,7 +148,18 @@ public class GameSettings : MonoBehaviour
             SaveSettings();
         }
         
-        Debug.Log($"Loaded difficulty: {currentDifficulty}");
+        if (PlayerPrefs.HasKey("GameMap"))
+        {
+            currentMap = (GameMap)PlayerPrefs.GetInt("GameMap");
+        }
+        else
+        {
+            // Default to VillageMap
+            currentMap = GameMap.VillageMap;
+            SaveSettings();
+        }
+        
+        Debug.Log($"Loaded difficulty: {currentDifficulty}, Map: {currentMap}");
     }
     
     /// <summary>
@@ -155,6 +179,38 @@ public class GameSettings : MonoBehaviour
                 return "DEFAULT\nAll 5 Waves | 10 Min | Full Game";
             default:
                 return "MEDIUM";
+        }
+    }
+    
+    /// <summary>
+    /// Get scene name for the current map
+    /// </summary>
+    public string GetMapSceneName()
+    {
+        switch (currentMap)
+        {
+            case GameMap.VillageMap:
+                return "VilageMapScene";
+            case GameMap.Level2Map:
+                return "Level2Scence";
+            default:
+                return "VilageMapScene";
+        }
+    }
+    
+    /// <summary>
+    /// Get map display name for UI
+    /// </summary>
+    public string GetMapDisplayName()
+    {
+        switch (currentMap)
+        {
+            case GameMap.VillageMap:
+                return "Village Map";
+            case GameMap.Level2Map:
+                return "Level 2";
+            default:
+                return "Village Map";
         }
     }
 }

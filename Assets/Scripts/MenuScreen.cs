@@ -124,8 +124,16 @@ public class MenuScreen : MonoBehaviour
     {
         Debug.Log("Play button clicked!");
         
+        // Get the selected map from GameSettings
+        string sceneToLoad = "VilageMapScene"; // Default
+        if (GameSettings.Instance != null)
+        {
+            sceneToLoad = GameSettings.Instance.GetMapSceneName();
+            Debug.Log($"Loading selected map: {sceneToLoad}");
+        }
+        
         // Set the target scene for the loading screen
-        PlayerPrefs.SetString("SceneToLoad", "VilageMapScene");
+        PlayerPrefs.SetString("SceneToLoad", sceneToLoad);
         PlayerPrefs.Save();
         
         // Load the loading scene directly
@@ -137,7 +145,7 @@ public class MenuScreen : MonoBehaviour
         {
             Debug.LogError($"Failed to load LoadingScene: {e.Message}");
             // Fallback: Load game scene directly
-            SceneManager.LoadScene("VilageMapScene");
+            SceneManager.LoadScene(sceneToLoad);
         }
     }
     
