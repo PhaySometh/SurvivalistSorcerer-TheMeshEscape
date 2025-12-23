@@ -41,6 +41,10 @@ public class GameOverPanel : MonoBehaviour
 
     void OnEnable()
     {
+        // Show cursor and unlock (critical for UI interaction)
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        
         // Update score when panel shows
         if (scoreText != null && GameManager.Instance != null)
         {
@@ -72,6 +76,13 @@ public class GameOverPanel : MonoBehaviour
 
     public void OnMainMenuClick()
     {
+        Debug.Log("GameOverPanel: Going to main menu...");
+        
+        // Ensure cursor is visible and unlocked before transitioning
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        Time.timeScale = 1f;
+        
         if (uiManager != null)
         {
             uiManager.BackToMainMenu();
@@ -79,7 +90,6 @@ public class GameOverPanel : MonoBehaviour
         else
         {
             Debug.LogWarning("UIManager not found! Using direct load.");
-            Time.timeScale = 1f;
             SceneTransitionManager.Instance.LoadSceneDirect("MenuScence");
         }
     }

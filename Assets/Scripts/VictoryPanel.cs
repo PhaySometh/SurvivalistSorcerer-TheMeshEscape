@@ -39,6 +39,10 @@ public class VictoryPanel : MonoBehaviour
 
     void OnEnable()
     {
+        // Show cursor and unlock (critical for UI interaction)
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        
         // Update stats when panel shows
         if (GameManager.Instance != null)
         {
@@ -94,13 +98,19 @@ public class VictoryPanel : MonoBehaviour
 
     public void OnMainMenuClick()
     {
+        Debug.Log("VictoryPanel: Going to main menu...");
+        
+        // Ensure cursor is visible and unlocked before transitioning
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        Time.timeScale = 1f;
+        
         if (uiManager != null)
         {
             uiManager.BackToMainMenu();
         }
         else
         {
-            Time.timeScale = 1f;
             SceneTransitionManager.Instance.LoadSceneDirect("MenuScence");
         }
     }
