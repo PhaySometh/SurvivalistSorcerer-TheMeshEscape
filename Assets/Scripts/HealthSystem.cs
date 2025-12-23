@@ -4,7 +4,7 @@ using UnityEngine.Events;
 public class HealthSystem : MonoBehaviour
 {
     [Header("Settings")]
-    public float maxHealth = 100f;
+    public float maxHealth = 150f;
     public bool destroyOnDeath = true;
 
     [Header("Debug/Status")]
@@ -30,6 +30,12 @@ public class HealthSystem : MonoBehaviour
 
         currentHealth -= damage;
         // Debug.Log($"{gameObject.name} took {damage} damage. Health: {currentHealth}");
+
+        // Flash red when hit (for enemies)
+        if (!gameObject.CompareTag("Player"))
+        {
+            StartCoroutine(FlashRed());
+        }
 
         // Trigger animation if player
         PlayerAnimatorController anim = GetComponent<PlayerAnimatorController>();
@@ -73,6 +79,9 @@ public class HealthSystem : MonoBehaviour
         currentHealth = 0;
         Debug.Log($"💀 {gameObject.name} died!");
         
+        // VISUAL DEATH EFFECT - Create explosion
+        CreateDeathExplosion();
+        
         // Trigger death animation
         PlayerAnimatorController playerAnim = GetComponent<PlayerAnimatorController>();
         if (playerAnim != null) 
@@ -115,6 +124,12 @@ public class HealthSystem : MonoBehaviour
             collisionDetector.enabled = false;
         }
         
+        // Make enemy semi-transparent when dead (visual indicator)
+        if (!gameObject.CompareTag("Player"))
+        {
+            MakeTransparent();
+        }
+        
         // Optionally disable the main collider so player can walk through
         Collider col = GetComponent<Collider>();
         if (col != null && !gameObject.CompareTag("Player"))
@@ -153,5 +168,118 @@ public class HealthSystem : MonoBehaviour
     {
         currentHealth = maxHealth;
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
+    }
+    
+    /// <summary>
+    /// Create explosion effect when enemy dies
+    /// </summary>
+    private void CreateDeathExplosion()
+    {
+        if (gameObject.CompareTag("Player")) return;
+        
+        // Create a sphere that explodes
+        GameObject explosion = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        explosion.transform.position = transform.position + Vector3.up;
+        explosion.transform.localScale = Vector3.one * 0.5f;
+        
+        // Make it red and glowing
+        Renderer rend = explosion.GetComponent<Renderer>();
+        Material mat = new Material(Shader.Find("Standard"));
+        mat.color = Color.red;
+        mat.SetColor("_EmissionColor", Color.red * 3f);
+        mat.EnableKeyword("_EMISSION");
+        rend.material = mat;
+        
+        // Remove collider
+        Destroy(explosion.GetComponent<Collider>());
+        
+        // Animate expansion
+        StartCoroutine(ExpandAndFade(explosion));
+    }
+    
+    private System.Collections.IEnumerator ExpandAndFade(GameObject obj)
+    {
+        float duration = 0.5f;
+        float elapsed = 0f;
+        Vector3 startScale = obj.transform.localScale;
+        Vector3 endScale = startScale * 5f;
+        
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            obj.transform.localScale = Vector3.Lerp(startScale, endScale, t);
+            
+            // Fade out
+            Renderer rend = obj.GetComponent<Renderer>();
+            if (rend != null)
+            {
+                Color col = rend.material.color;
+                col.a = 1f - t;
+                rend.material.color = col;
+            }
+            
+            yield return null;
+        }
+        
+        Destroy(obj);
+    }
+    
+    /// <summary>
+    /// Flash red when taking damage
+    /// </summary>
+    private System.Collections.IEnumerator FlashRed()
+    {
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        Material[] originalMaterials = new Material[renderers.Length];
+        
+        // Store original materials
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            originalMaterials[i] = renderers[i].material;
+        }
+        
+        // Flash red
+        Material redMat = new Material(Shader.Find("Standard"));
+        redMat.color = Color.red;
+        redMat.SetColor("_EmissionColor", Color.red * 2f);
+        redMat.EnableKeyword("_EMISSION");
+        
+        foreach (Renderer rend in renderers)
+        {
+            rend.material = redMat;
+        }
+        
+        yield return new WaitForSeconds(0.1f);
+        
+        // Restore original materials
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            renderers[i].material = originalMaterials[i];
+        }
+    }
+    
+    /// <summary>
+    /// Make enemy transparent when dead (visual indicator)
+    /// </summary>
+    private void MakeTransparent()
+    {
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        foreach (Renderer rend in renderers)
+        {
+            Material mat = rend.material;
+            mat.SetFloat("_Mode", 3); // Transparent mode
+            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.SetInt("_ZWrite", 0);
+            mat.DisableKeyword("_ALPHATEST_ON");
+            mat.EnableKeyword("_ALPHABLEND_ON");
+            mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            mat.renderQueue = 3000;
+            
+            Color col = mat.color;
+            col.a = 0.3f; // Semi-transparent
+            mat.color = col;
+        }
     }
 }
