@@ -199,30 +199,45 @@ public class UIManager : MonoBehaviour
 
     IEnumerator FadeNotification(string message)
     {
+        // Safety check: Stop if objects are destroyed
+        if (centerNotificationText == null || centerTextGroup == null)
+        {
+            currentFadeRoutine = null;
+            yield break;
+        }
+        
         centerNotificationText.text = message;
         
-        // SLOWER FADE
+        // SLOWER FADE IN
         float duration = 1.0f; 
         float elapsed = 0f;
         while (elapsed < duration)
         {
+            // Check if still valid during fade
+            if (centerTextGroup == null) yield break;
+            
             elapsed += Time.deltaTime;
             centerTextGroup.alpha = Mathf.Lerp(0, 1, elapsed / duration);
             yield return null;
         }
-        centerTextGroup.alpha = 1;
+        
+        if (centerTextGroup != null) centerTextGroup.alpha = 1;
 
         yield return new WaitForSeconds(2.5f); // Hold slightly longer
 
-        // SLOWER FADE
+        // SLOWER FADE OUT
         elapsed = 0f;
         while (elapsed < duration)
         {
+            // Check if still valid during fade
+            if (centerTextGroup == null) yield break;
+            
             elapsed += Time.deltaTime;
             centerTextGroup.alpha = Mathf.Lerp(1, 0, elapsed / duration);
             yield return null;
         }
-        centerTextGroup.alpha = 0;
+        
+        if (centerTextGroup != null) centerTextGroup.alpha = 0;
         currentFadeRoutine = null;
     }
 

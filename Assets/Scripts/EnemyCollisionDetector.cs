@@ -29,6 +29,8 @@ public class EnemyCollisionDetector : MonoBehaviour
     private Transform playerTransform;
     private HealthSystem playerHealth;
     private float nextProximityCheck = 0f;
+    private HealthSystem myHealth; // Enemy's own health
+    private bool isEnemyDead = false;
 
     /* 
     SETUP GUIDE FOR PHAY:
@@ -48,6 +50,14 @@ public class EnemyCollisionDetector : MonoBehaviour
         // Find player at start
         FindPlayer();
         
+        // Get enemy's health system
+        myHealth = GetComponent<HealthSystem>();
+        if (myHealth == null) myHealth = GetComponentInParent<HealthSystem>();
+        if (myHealth != null)
+        {
+            myHealth.OnDeath.AddListener(OnEnemyDeath);
+        }
+        
         // Check if we have a collider set as trigger
         Collider myCollider = GetComponent<Collider>();
         if (myCollider != null && !myCollider.isTrigger)
@@ -55,6 +65,13 @@ public class EnemyCollisionDetector : MonoBehaviour
             if (showDebugLogs) Debug.LogWarning($"⚠️ {gameObject.name}: EnemyCollisionDetector works best with a Trigger collider! Enabling proximity detection as backup.");
             useProximityDetection = true;
         }
+    }
+    
+    private void OnEnemyDeath()
+    {
+        isEnemyDead = true;
+        // Disable this script when enemy dies
+        enabled = false;
     }
     
     private void FindPlayer()
@@ -188,6 +205,10 @@ public class EnemyCollisionDetector : MonoBehaviour
     /// </summary>
     private void DealDamageToPlayer(GameObject playerObject)
     {
+        // Don't deal damage if this enemy is dead
+        if (isEnemyDead) return;
+        if (myHealth != null && myHealth.IsDead) return;
+        
         // Find HealthSystem on the player
         HealthSystem health = playerObject.GetComponent<HealthSystem>();
         if (health == null) health = playerObject.GetComponentInParent<HealthSystem>();
