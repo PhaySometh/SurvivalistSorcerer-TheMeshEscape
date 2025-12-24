@@ -7,9 +7,9 @@ using UnityEngine;
 public class MagicProjectile : MonoBehaviour
 {
     [Header("Projectile Settings")]
-    public float speed = 15f;
-    public float damage = 25f;
-    public float lifetime = 5f;
+    public float speed = 80f;
+    public float damage = 500f;
+    public float lifetime = 30f;
     public float homingStrength = 0f; // 0 = no homing, higher = more homing
     
     [Header("Visual Effects")]
@@ -29,6 +29,11 @@ public class MagicProjectile : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         
+        Debug.Log($"🚀 MagicProjectile spawned! Damage: {damage}, Speed: {speed}, Homing: {homingStrength}");
+        
+        // Add glowing trail effect
+        AddTrailEffect();
+        
         // Destroy after lifetime
         Destroy(gameObject, lifetime);
         
@@ -38,6 +43,20 @@ public class MagicProjectile : MonoBehaviour
             rb = gameObject.AddComponent<Rigidbody>();
             rb.useGravity = false;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            rb.constraints = RigidbodyConstraints.FreezeRotation;
+        }
+        
+        // Ensure we have a collider
+        Collider col = GetComponent<Collider>();
+        if (col == null)
+        {
+            SphereCollider sphere = gameObject.AddComponent<SphereCollider>();
+            sphere.isTrigger = true;
+            sphere.radius = 2f; // Very large radius for guaranteed hits
+        }
+        else if (col is SphereCollider sphereCol)
+        {
+            sphereCol.radius = Mathf.Max(sphereCol.radius, 2f); // Ensure at least 2 unit radius
         }
     }
 
@@ -81,10 +100,30 @@ public class MagicProjectile : MonoBehaviour
             transform.rotation = Quaternion.LookRotation(direction);
         }
     }
+    
+    /// <summary>
+    /// Add a glowing trail effect to make projectile more visible
+    /// </summary>
+    private void AddTrailEffect()
+    {
+        // Check if trail doesn't exist
+        if (trail == null)
+        {
+            trail = gameObject.AddComponent<TrailRenderer>();
+            trail.time = 0.5f;
+            trail.startWidth = 0.5f;
+            trail.endWidth = 0.1f;
+            trail.material = new Material(Shader.Find("Sprites/Default"));
+            trail.startColor = new Color(0.3f, 0.7f, 1f, 1f); // Bright blue
+            trail.endColor = new Color(0.3f, 0.7f, 1f, 0f); // Fade to transparent
+        }
+    }
 
     void OnTriggerEnter(Collider other)
     {
         if (hasHit) return;
+        
+        Debug.Log($"🎯 Projectile hit: {other.name} (Tag: {other.tag})");
         
         // Don't hit the player
         if (other.CompareTag("Player")) return;
@@ -92,6 +131,8 @@ public class MagicProjectile : MonoBehaviour
         
         // Check if it's an enemy using multiple methods
         bool isEnemy = CheckIfEnemy(other.gameObject);
+        
+        Debug.Log($"   Is enemy? {isEnemy}");
         
         // Try to find and damage HealthSystem
         if (isEnemy)
@@ -103,9 +144,13 @@ public class MagicProjectile : MonoBehaviour
             if (targetHealth != null && !targetHealth.IsDead)
             {
                 targetHealth.TakeDamage(damage);
-                Debug.Log($"🔥 Magic projectile hit {other.transform.root.name} for {damage} damage! Their HP: {targetHealth.CurrentHealth}");
+                Debug.Log($"🔥 Magic projectile hit {other.transform.root.name} for {damage} damage! Their HP: {targetHealth.CurrentHealth}/{targetHealth.maxHealth}");
                 OnHit(other.ClosestPoint(transform.position));
                 return;
+            }
+            else
+            {
+                Debug.LogWarning($"⚠️ Enemy {other.name} has no HealthSystem or is already dead!");
             }
         }
         
@@ -156,6 +201,8 @@ public class MagicProjectile : MonoBehaviour
     {
         if (hasHit) return;
         
+        Debug.Log($"💥 Projectile collision with: {collision.gameObject.name}");
+        
         // Don't hit the player
         if (collision.gameObject.CompareTag("Player")) return;
         
@@ -165,13 +212,20 @@ public class MagicProjectile : MonoBehaviour
         {
             targetHealth = collision.gameObject.GetComponentInParent<HealthSystem>();
         }
+        if (targetHealth == null)
+        {
+            targetHealth = collision.gameObject.transform.root.GetComponent<HealthSystem>();
+        }
         
         if (targetHealth != null && !targetHealth.IsDead)
         {
             targetHealth.TakeDamage(damage);
-            Debug.Log($"🔥 Magic projectile hit {collision.gameObject.name} for {damage} damage!");
+            Debug.Log($"🔥💥 Collision damage: {damage} to {collision.gameObject.name}! HP: {targetHealth.CurrentHealth}/{targetHealth.maxHealth}");
+            OnHit(collision.contacts[0].point);
+            return;
         }
         
+        // Hit environment
         OnHit(collision.contacts[0].point);
     }
 
