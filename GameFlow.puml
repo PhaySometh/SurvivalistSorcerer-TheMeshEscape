@@ -1,0 +1,167 @@
+@startuml Survivalist Sorcerer - Game Flow
+
+!theme cerulean-outline
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #2C3E50
+skinparam ActivityBorderColor #3498DB
+skinparam ActivityBackgroundColor #ECF0F1
+
+title Survivalist Sorcerer - The Mesh Escape\nGame Flow Diagram
+
+start
+
+:🏠 **Main Menu**;
+note right
+  - Start Game
+  - Settings
+  - Credits
+  - Quit
+end note
+
+:⚙️ **Select Difficulty**;
+note right
+  **Difficulty Options:**
+  • Easy (1 wave)
+  • Medium (3 waves)
+  • Hard (5 waves + Sudden Death)
+  • Default (5 waves)
+end note
+
+:🗺️ **Select Map**;
+note right
+  • Village Map
+  • Level 2 Map
+end note
+
+:⏳ **Loading Screen**;
+note right
+  - Load scene assets
+  - Initialize GameManager
+  - Setup player & enemies
+end note
+
+:🎬 **Game Start Sequence**;
+note right
+  Display messages:
+  1. "You have 10 minutes to escape..."
+  2. "Defeat the boss as fast as you can!"
+  3. "Are you ready?"
+end note
+
+:🎮 **GameManager.StartGame()**;
+note right
+  - Reset score to 0
+  - Set time limit
+  - Start wave manager
+end note
+
+partition "Wave System" {
+    repeat
+        :📢 **Wave Announcement**;
+        note right
+          "Wave X incoming!"
+          Display wave number
+        end note
+        
+        :⚔️ **Wave In Progress**;
+        note right
+          **WaveManager spawns enemies:**
+          - Slimes
+          - Turtles
+          - Skeletons
+          - Golems
+        end note
+        
+        :🎯 **Player Combat**;
+        note right
+          - Cast spells (Light/Heavy)
+          - Auto-targeting system
+          - Collect coins
+          - Avoid damage
+        end note
+        
+        while (All enemies defeated?) is (No)
+            :⏱️ **Check Timer**;
+            if (Time remaining > 0?) then (Yes)
+                :💫 **Continue Fighting**;
+            else (No)
+                if (Sudden Death Active?) then (Yes)
+                    :💀 **Game Over**;
+                    stop
+                else (No)
+                    :⚠️ **Trigger Sudden Death**;
+                    note right
+                      - Set 2 minutes overtime
+                      - Increase enemy spawn
+                      - Alert player
+                    end note
+                endif
+            endif
+        endwhile (Yes)
+        
+        :💰 **Wave Complete**;
+        note right
+          - Add score
+          - Add experience
+          - Show wave cleared
+        end note
+        
+        :⏸️ **Preparation Buffer**;
+        note right
+          15 seconds rest
+          between waves
+        end note
+        
+    repeat while (More waves?) is (Yes)
+    -> No;
+}
+
+:🐂 **Boss Fight**;
+note right
+  **Spawn Bull Boss**
+  - High HP
+  - Multiple attack patterns
+  - Final challenge
+end note
+
+while (Boss defeated?) is (No)
+    :⚔️ **Battle Boss**;
+    if (Player HP > 0?) then (Yes)
+        :✨ **Cast Spells**;
+    else (No)
+        :💀 **Game Over**;
+        :📊 **Show Game Over Panel**;
+        note right
+          - Display final score
+          - Show time survived
+          - Retry or Menu options
+        end note
+        stop
+    endif
+endwhile (Yes)
+
+:🏆 **Victory!**;
+note right
+  **VictoryConditionChecker**
+  - All waves cleared
+  - Boss defeated
+end note
+
+:🎉 **Victory Panel**;
+note right
+  - Final score
+  - Total time
+  - Coins collected
+  - Save high score
+end note
+
+if (Play Again?) then (Yes)
+    :🔄 **Restart Game**;
+    detach
+else (No)
+    :🏠 **Return to Main Menu**;
+    stop
+endif
+
+@enduml
