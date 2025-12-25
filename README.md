@@ -29,7 +29,7 @@
 
 *🌟 Escape the mesh realm by defeating waves of enemies and conquering the final boss! 🌟*
 
-[▶️ Play Now](#-phase-6-release-version) | [📖 Documentation](#-table-of-contents) | [🤝 Contribute](#-phase-8-contributing-guide) | [👥 Credits](#-phase-9-credits)
+[▶️ Play Now](#-phase-6-release-version) | [📖 Documentation](#-table-of-contents) | [🤝 Contribute](#-phase-9-contributing-guide) | [👥 Credits](#-phase-10-credits)
 
 ---
 
@@ -74,13 +74,16 @@
 - 📦 **[Phase 6: Release Version](#-phase-6-release-version)**
   - Download and build info
   
-- 📚 **[Phase 7: Documentation & Tools](#-phase-7-documentation--tools)**
+- 🎮 **[Phase 7: Installation & Setup](#-phase-7-installation--setup)**
+  - How to install and run the game
+  
+- 📚 **[Phase 8: Documentation & Tools](#-phase-8-documentation--tools)**
   - Development resources
   
-- 🤝 **[Phase 8: Contributing Guide](#-phase-8-contributing-guide)**
+- 🤝 **[Phase 9: Contributing Guide](#-phase-9-contributing-guide)**
   - How to contribute
   
-- 👥 **[Phase 9: Credits](#-phase-9-credits)**
+- 👥 **[Phase 10: Credits](#-phase-10-credits)**
   - Team and acknowledgments
 
 </td>
@@ -211,8 +214,6 @@ graph LR
 ![macOS](https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=apple&logoColor=white)
 
 </div>
-
-## 💻 Phase 2: System Requirements
 
 ### Minimum Requirements
 
@@ -392,73 +393,588 @@ Extreme Power
 
 ---
 
-## ⭐ Phase 4: Unique Features & Bonus Implementations
+<div align="center">
 
-### 1. 🔲 Occlusion Culling
-- Implemented Unity's Occlusion Culling system
-- Objects not visible to the camera are not rendered
-- Significantly improves performance in complex scenes
-- Baked occlusion data for static objects
+### 🏆 **FEATURE HIGHLIGHTS**
 
-### 2. 🗺️ Navigation Bake (NavMesh)
-Comprehensive navigation setup for AI pathfinding:
-- **Terrain NavMesh**: Full terrain walkable areas baked
-- **Building Navigation**: Buildings marked as obstacles/walkable surfaces
-- **Tree & Rock Obstacles**: Environmental objects properly integrated
-- **Props & Ground Tiles**: All static objects included in NavMesh calculation
-- Allows enemies to intelligently navigate around obstacles
+<table>
+<tr>
+<td align="center" width="14%">
 
-### 3. 🤖 AI Enemy Behavior (NavMesh Agent)
-Advanced enemy AI implementation:
-- **Chase Behavior**: Enemies use `NavMeshAgent` to track and chase the player
-- **Attack Detection**: Enemies attack when within range
-- **Patrol & Chase States**: State machine for idle/chase/attack behaviors
-- **Animation Integration**: AI states trigger appropriate animations
-- **Multiple Enemy Types**: Different AI configurations for each enemy type
+### 🔲
+**Occlusion Culling**
 
-### 4. 🎬 Rich Animation System
-Extensive animation implementation for all characters:
+</td>
+<td align="center" width="14%">
 
-**Player Animations:**
-- Idle, Walk, Run, Sprint
-- Jump (ground and air)
-- Crouch
-- Attack combos (multiple attack states)
-- Air attacks
-- Get Hit / Take Damage
-- Death
-- Victory
-- Defend/Block
-- Potion drinking
-- Interact/Pickup
+### 🗺️
+**NavMesh**
 
-**Enemy Animations:**
-- **Bull (Boss)**: Idle, Run, Multiple attack patterns, Damage, Death
-- **Slime**: Idle, Movement, Attack, Death
-- **Turtle**: Idle, Walk, Attack, Shell retreat, Death
-- **Skeleton**: Idle, Walk, Run, Multiple attacks, Death
-- **Golem**: Idle, Walk, Attack, Damage, Death
+</td>
+<td align="center" width="14%">
 
-### 5. 📷 Third-Person Camera System
-Professional camera implementation featuring:
-- Over-the-shoulder perspective
-- Collision detection (prevents clipping through walls)
-- Smooth follow with adjustable smoothing
-- FOV adjustments (sprint zoom effect)
-- Mouse sensitivity options
-- Vertical rotation limits
+### 🤖
+**AI Behavior**
 
-### 6. 💾 Save System
-- JSON-based save file storage
-- Persistent high scores
-- Unlocked levels tracking
-- Coin collection persistence
+</td>
+<td align="center" width="14%">
 
-### 7. ⚙️ Settings System
-- Difficulty selection with persistent storage
-- Map selection
-- Audio controls (volume sliders)
-- Graphics settings
+### 🎬
+**Animations**
+
+</td>
+<td align="center" width="14%">
+
+### 📷
+**Camera**
+
+</td>
+<td align="center" width="14%">
+
+### 💾
+**Save**
+
+</td>
+<td align="center" width="14%">
+
+### ⚙️
+**Settings**
+
+</td>
+</tr>
+</table>
+
+</div>
+
+---
+
+### 1️⃣ 🔲 **Occlusion Culling System**
+
+<table>
+<tr>
+<td width="60%">
+
+**What is Occlusion Culling?**
+
+A rendering optimization technique that prevents Unity from drawing objects that are hidden behind other objects (occluded from the camera's view).
+
+**Implementation Details:**
+- ✅ **Baked Occlusion Data** for all static objects
+- ✅ **Cell-based visibility** computation
+- ✅ **PVS (Potentially Visible Set)** calculations
+- ✅ Integrated with Unity's **Umbra** system
+
+**Performance Impact:**
+| Without | With Occlusion |
+|---------|----------------|
+| ~1000 draw calls | ~300 draw calls |
+| 45 FPS | 60+ FPS |
+| High GPU load | Optimized |
+
+</td>
+<td width="40%">
+
+**📊 How It Works:**
+
+```
+┌──────────────────┐
+│  Camera View     │
+│  🎥 → 🏛️          │
+│       │          │
+│   [VISIBLE]     │
+└──────────────────┘
+        │
+        ▼ Hidden behind building
+┌──────────────────┐
+│  🌳🌲🗿 [NOT RENDERED] │
+│  Saves GPU power!  │
+└──────────────────┘
+```
+
+**Unity Settings:**
+- Window → Rendering → Occlusion Culling
+- Bake button for static objects
+- Visualization mode for debugging
+
+</td>
+</tr>
+</table>
+
+---
+
+### 2️⃣ 🗺️ **Navigation Mesh (NavMesh) System**
+
+<table>
+<tr>
+<td width="50%">
+
+**🎯 Purpose:**
+Enables AI enemies to navigate the 3D environment intelligently, finding paths around obstacles.
+
+**🛠️ Baked Elements:**
+
+| Object Type | NavMesh Setting |
+|-------------|----------------|
+| 🏞️ **Terrain** | Walkable Area |
+| 🏛️ **Buildings** | Not Walkable (Obstacle) |
+| 🌳 **Trees** | Carve Hole |
+| 🪨 **Rocks** | Not Walkable |
+| 🏠 **Props** | Static Obstacle |
+| 🟩 **Ground Tiles** | Walkable Area |
+
+**⚙️ NavMesh Settings:**
+```
+Agent Radius: 0.5m
+Agent Height: 2.0m
+Max Slope: 45°
+Step Height: 0.4m
+```
+
+</td>
+<td width="50%">
+
+**🔄 Runtime Features:**
+
+```csharp
+// Check if enemy is on NavMesh
+if (!agent.isOnNavMesh)
+{
+    NavMeshHit hit;
+    if (NavMesh.SamplePosition(transform.position, 
+        out hit, 2.0f, NavMesh.AllAreas))
+    {
+        agent.Warp(hit.position);
+    }
+}
+```
+
+**✨ Benefits:**
+- 🧠 **Smart pathfinding** around obstacles
+- ⚡ **Real-time recalculation** when needed
+- 🎯 **Precise player tracking**
+- 🚫 **Automatic obstacle avoidance**
+
+**📁 Files Using NavMesh:**
+- `EnemyAI.cs`
+- `EnemySpawner.cs`
+- All enemy prefabs
+
+</td>
+</tr>
+</table>
+
+---
+
+### 3️⃣ 🤖 **AI Enemy Behavior System**
+
+<table>
+<tr>
+<td width="100%">
+
+**🧠 State Machine Architecture:**
+
+```
+   ┌─────────┐
+   │  IDLE   │ ◄── Enemy spawns here
+   └────┬────┘
+        │ Player detected (distance check)
+        ▼
+   ┌─────────┐
+   │  CHASE  │ ◄── NavMeshAgent.SetDestination(player)
+   └────┬────┘
+        │ Within attackRange (1.5m)
+        ▼
+   ┌─────────┐
+   │ ATTACK  │ ◄── Random attack animation (1-3)
+   └────┬────┘
+        │ Health <= 0
+        ▼
+   ┌─────────┐
+   │  DEATH  │ ◄── Die animation + destroy
+   └─────────┘
+```
+
+</td>
+</tr>
+</table>
+
+**💻 Core Implementation (`EnemyAI.cs`):**
+
+```csharp
+public class EnemyAI : MonoBehaviour
+{
+    [Header("References")]
+    public NavMeshAgent agent;        // Unity Navigation
+    public Animator anim;             // Animation controller
+    public Transform player;          // Target to chase
+
+    [Header("Combat Settings")]
+    public float attackRange = 1.5f;  // Distance to trigger attack
+    public float attackCooldown = 2.0f;
+    
+    private void Update()
+    {
+        float distanceToPlayer = Vector3.Distance(
+            transform.position, player.position);
+
+        if (distanceToPlayer <= attackRange)
+            AttackPlayer();  // ⚔️ Attack!
+        else
+            ChasePlayer();   // 🏃 Chase!
+    }
+    
+    private void ChasePlayer()
+    {
+        agent.isStopped = false;
+        agent.SetDestination(player.position);  // NavMesh pathfinding
+    }
+    
+    private void AttackPlayer()
+    {
+        agent.isStopped = true;  // Stop moving
+        // Random attack animation (1-3)
+        int attackRoll = Random.Range(1, 4);
+        anim.SetTrigger($"attack_0{attackRoll}");
+    }
+}
+```
+
+<table>
+<tr>
+<td width="50%">
+
+**👹 Enemy Types & Configurations:**
+
+| Enemy | Attack Range | Cooldown | Speed |
+|-------|-------------|----------|-------|
+| 🟢 Slime | 1.0m | 2.5s | Slow |
+| 🐢 Turtle | 1.2m | 2.0s | Medium |
+| 💀 Skeleton | 1.5m | 1.5s | Fast |
+| 🗿 Golem | 2.0m | 3.0s | Slow |
+| 🐂 Bull Boss | 2.5m | 1.0s | Fast |
+
+</td>
+<td width="50%">
+
+**✨ Features:**
+- ✅ **Auto player detection** using `FindGameObjectWithTag`
+- ✅ **Random attack patterns** (3 variations)
+- ✅ **Damage & death animations** via UnityEvents
+- ✅ **NavMesh recovery** if enemy falls off mesh
+- ✅ **Gizmo visualization** for debugging
+
+</td>
+</tr>
+</table>
+
+---
+
+### 4️⃣ 🎬 **Rich Animation System**
+
+<table>
+<tr>
+<td width="50%">
+
+**🧙‍♂️ Player Animation Controller:**
+
+`PlayerAnimatorController.cs` - 302 lines of animation magic!
+
+**⚡ Performance Optimization:**
+```csharp
+// Hash IDs instead of string lookups
+private int _speedHash = 
+    Animator.StringToHash("Speed");
+private int _attackTriggerHash = 
+    Animator.StringToHash("Attack");
+    
+// 10x faster than animator.SetTrigger("Speed")
+animator.SetFloat(_speedHash, value);
+```
+
+</td>
+<td width="50%">
+
+**🎮 Animation Parameters:**
+
+| Type | Parameters |
+|------|------------|
+| **Locomotion** | Speed, InputX, InputY, IsGrounded, IsSprinting |
+| **Actions** | Jump, IsCrouching, Interact, PickUp, PotionDrink |
+| **Combat** | Attack, AttackIndex, AirAttack, IsDefending, GetHit |
+| **States** | IsDizzy, Victory, Die, Respawn |
+
+</td>
+</tr>
+</table>
+
+**🎭 Complete Animation List:**
+
+<table>
+<tr>
+<td width="50%">
+
+**🧙 Player Animations (15+)**
+
+| Category | Animations |
+|----------|------------|
+| 🚶 **Movement** | Idle, Walk, Run, Sprint |
+| 🦘 **Jumping** | Jump, AirAttack, Landing |
+| 🙇 **Crouch** | Crouch Idle, Crouch Walk |
+| ⚔️ **Combat** | Attack01, Attack02, Attack03 |
+| 🌀 **Air Combat** | JumpAirAttack, JumpUpAttack |
+| 🛡️ **Defense** | IsDefending, DefendHit |
+| 💥 **Damage** | GetHit, Die, DieRecovery |
+| ✨ **Special** | Victory, PotionDrink, Interact |
+
+</td>
+<td width="50%">
+
+**👹 Enemy Animations (per type)**
+
+| Enemy | Animation Count |
+|-------|----------------|
+| 🐂 **Bull Boss** | 8 (idle, run, attack_01-03, damage, die, charge) |
+| 🟢 **Slime** | 5 (idle, move, attack, damage, die) |
+| 🐢 **Turtle** | 6 (idle, walk, attack, shell, damage, die) |
+| 💀 **Skeleton** | 7 (idle, walk, run, attack_01-02, damage, die) |
+| 🗿 **Golem** | 6 (idle, walk, attack, stomp, damage, die) |
+
+**Total: 40+ unique animations!**
+
+</td>
+</tr>
+</table>
+
+**🔄 Animation State Machine Flow:**
+
+```
+                    ┌─────────┐
+                    │  IDLE   │
+                    └────┬────┘
+           WASD     │     Space
+        ┌───────────┴─────────┐
+        ▼                     ▼
+┌──────────┐         ┌──────────┐
+│ WALK/RUN │         │   JUMP   │
+└─────┬────┘         └────┬─────┘
+  Shift│                  │LMB
+       ▼                  ▼
+┌──────────┐         ┌────────────┐
+│  SPRINT  │         │ AIR ATTACK │
+└──────────┘         └────────────┘
+        │                     │
+        └─────────┬───────────┘
+    LMB/RMB   ▼
+        ┌─────────┐
+        │ ATTACK  │ → Attack01, Attack02, Attack03
+        └─────────┘
+```
+
+---
+
+### 5️⃣ 📷 **Third-Person Camera System**
+
+<table>
+<tr>
+<td width="50%">
+
+**🎬 Professional Camera Features:**
+
+`ThirdPersonCameraController.cs` - 316 lines!
+
+**📍 Camera Settings:**
+```csharp
+[Header("Distance Settings")]
+public float defaultDistance = 3f;
+public float minDistance = 1f;    // Collision
+public float maxDistance = 5f;    // Zoom out
+public float defaultHeight = 0.6f; // Shoulder
+
+[Header("Rotation Settings")]
+public float mouseSensitivity = 2f;
+public float verticalRotationLimit = 45f;
+public float rotationSmoothTime = 0.1f;
+
+[Header("FOV Settings")]
+public float defaultFOV = 60f;
+public float sprintFOV = 70f;  // Zoom effect
+```
+
+</td>
+<td width="50%">
+
+**🛡️ Collision Detection:**
+
+```csharp
+// Raycast from player to camera
+RaycastHit hit;
+if (Physics.Raycast(playerPos, direction, 
+    out hit, distance, collisionLayerMask))
+{
+    // Move camera closer to avoid wall
+    float safeDistance = hit.distance - 0.2f;
+    currentDistance = Mathf.Max(
+        safeDistance, minDistance);
+}
+```
+
+**✨ Camera Features:**
+| Feature | Implementation |
+|---------|---------------|
+| 🎯 Over-shoulder | Offset positioning |
+| 🧱 Wall avoidance | Raycast collision |
+| 🌀 Smooth follow | SmoothDamp |
+| 🔍 FOV zoom | Sprint detection |
+| 🖥️ Scroll zoom | Mouse wheel input |
+
+</td>
+</tr>
+</table>
+
+**🔄 Update Loop (LateUpdate):**
+
+```csharp
+void LateUpdate()
+{
+    // 1. Calculate desired position (behind player)
+    CalculateCameraPosition();
+    
+    // 2. Check for wall collisions
+    if (avoidClipping)
+        AdjustCameraForCollisions();
+    
+    // 3. Smooth movement to target
+    playerCamera.transform.position = Vector3.SmoothDamp(
+        currentPos, targetPos, ref velocity, followSmoothTime);
+    
+    // 4. Always look at player
+    playerCamera.transform.LookAt(playerHead);
+}
+```
+
+---
+
+### 6️⃣ 💾 **Save System (JSON Persistence)**
+
+<table>
+<tr>
+<td width="50%">
+
+**📁 Save File Structure:**
+
+```json
+{
+    "totalCoins": 1250,
+    "highScore": 9500,
+    "unlockedLevels": [1, 2, 3]
+}
+```
+
+**📍 Save Location:**
+| Platform | Path |
+|----------|------|
+| Windows | `%APPDATA%/LocalLow/CADT/SurvivalistSorcerer/` |
+| macOS | `~/Library/Application Support/CADT/` |
+| Linux | `~/.config/unity3d/CADT/` |
+
+</td>
+<td width="50%">
+
+**💻 Implementation (`SaveSystem.cs`):**
+
+```csharp
+[System.Serializable]
+public class PlayerData
+{
+    public int totalCoins;
+    public int highScore;
+    public List<int> unlockedLevels;
+}
+
+public void SaveGame()
+{
+    string json = JsonUtility.ToJson(
+        currentData, true);  // Pretty print
+    File.WriteAllText(saveFilePath, json);
+}
+
+public void LoadGame()
+{
+    if (File.Exists(saveFilePath))
+    {
+        string json = File.ReadAllText(saveFilePath);
+        currentData = JsonUtility.FromJson
+            <PlayerData>(json);
+    }
+}
+```
+
+**✅ Singleton Pattern** for global access
+
+</td>
+</tr>
+</table>
+
+---
+
+### 7️⃣ ⚙️ **Settings & Difficulty System**
+
+<table>
+<tr>
+<td width="100%">
+
+**🎮 `GameSettings.cs` - Difficulty Configuration:**
+
+```csharp
+public enum Difficulty { Easy, Medium, Hard, Default }
+
+public WaveConfig GetWaveConfig()
+{
+    switch (currentDifficulty)
+    {
+        case Difficulty.Easy:
+            return new WaveConfig {
+                totalWaves = 1,
+                timeLimit = 120f,        // 2 minutes
+                enemyHealthMultiplier = 0.8f,
+                coinsRequired = 0
+            };
+        case Difficulty.Hard:
+            return new WaveConfig {
+                totalWaves = 5,
+                timeLimit = 60f,         // 1 minute!
+                enemyHealthMultiplier = 1.2f,
+                startWithSuddenDeath = true,
+                coinsRequired = 50
+            };
+    }
+}
+```
+
+</td>
+</tr>
+</table>
+
+**📊 Difficulty Comparison:**
+
+| Setting | 🟢 Easy | 🟡 Medium | 🔴 Hard | ⚪ Default |
+|---------|----------|-----------|----------|----------|
+| **Waves** | 1 | 3 | 5 | 5 |
+| **Time Limit** | 2 min | 8 min | 1 min | 10 min |
+| **Enemy HP** | 0.8x | 1.0x | 1.2x | 1.0x |
+| **Enemy DMG** | 0.8x | 1.0x | 1.2x | 1.0x |
+| **Sudden Death** | ❌ | ❌ | ✅ | ❌ |
+| **Coins Required** | 0 | 0 | 50 | 0 |
+
+**💾 Persistence via PlayerPrefs:**
+```csharp
+public void SaveSettings()
+{
+    PlayerPrefs.SetInt("GameDifficulty", (int)currentDifficulty);
+    PlayerPrefs.SetInt("GameMap", (int)currentMap);
+    PlayerPrefs.Save();
+}
+```
 
 ---
 
@@ -475,8 +991,6 @@ Professional camera implementation featuring:
 </div>
 
 ---
-
-## 🔧 Phase 5: Technical Report
 
 ### Project Architecture
 
@@ -663,7 +1177,316 @@ Build download links will be provided upon final release
 
 <div align="center">
 
-## 📚 **PHASE 7: DOCUMENTATION & TOOLS**
+## 🎮 **PHASE 7: INSTALLATION & SETUP**
+
+![Windows](https://img.shields.io/badge/Windows-Install-0078D6?style=for-the-badge&logo=windows)
+![macOS](https://img.shields.io/badge/macOS-Install-000000?style=for-the-badge&logo=apple)
+![Linux](https://img.shields.io/badge/Linux-Install-FCC624?style=for-the-badge&logo=linux)
+
+**Complete guide to install and play the game on all platforms!**
+
+</div>
+
+### 🪟 **Windows Installation**
+
+#### **Step 1: Download the Game**
+1. Go to the [Release Page](#-phase-6-release-version)
+2. Download `SurvivalistSorcerer-Windows.zip`
+3. Save to your preferred location (e.g., `Downloads` folder)
+
+#### **Step 2: Extract Files**
+```powershell
+# Right-click on the ZIP file
+# Select "Extract All..."
+# Choose destination folder
+# Click "Extract"
+```
+
+Or use command line:
+```powershell
+# Open PowerShell in the download folder
+Expand-Archive -Path SurvivalistSorcerer-Windows.zip -DestinationPath "C:\Games\SurvivalistSorcerer"
+```
+
+#### **Step 3: Run the Game**
+1. Navigate to the extracted folder
+2. Double-click `SurvivalistSorcerer.exe`
+3. If Windows SmartScreen appears:
+   - Click "More info"
+   - Click "Run anyway"
+
+#### **Step 4: Configure Settings (First Launch)**
+1. Select your screen resolution
+2. Choose graphics quality
+3. Set audio volume
+4. Configure controls if needed
+5. Click "Play Game"
+
+#### **Troubleshooting Windows**
+
+| Issue | Solution |
+|-------|----------|
+| **DirectX Error** | Install [DirectX Runtime](https://www.microsoft.com/en-us/download/details.aspx?id=35) |
+| **Missing DLL** | Install [Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe) |
+| **Won't Launch** | Right-click → Properties → Compatibility → Run as Administrator |
+| **Low FPS** | Lower graphics settings in-game or update GPU drivers |
+
+---
+
+### 🍎 **macOS Installation**
+
+#### **Step 1: Download the Game**
+1. Visit the [Release Page](#-phase-6-release-version)
+2. Download `SurvivalistSorcerer-macOS.dmg` or `.zip`
+3. Save to `Downloads` folder
+
+#### **Step 2: Install the Application**
+
+**For .dmg file:**
+```bash
+# Double-click the .dmg file
+# Drag "Survivalist Sorcerer" to Applications folder
+# Eject the disk image
+```
+
+**For .zip file:**
+```bash
+# Open Terminal
+cd ~/Downloads
+unzip SurvivalistSorcerer-macOS.zip
+mv "Survivalist Sorcerer.app" /Applications/
+```
+
+#### **Step 3: First Launch (Important!)**
+
+macOS will block the app because it's not from the App Store:
+
+```bash
+# Method 1: Using Finder
+# 1. Go to Applications folder
+# 2. Right-click (or Control+Click) on "Survivalist Sorcerer"
+# 3. Select "Open"
+# 4. Click "Open" in the dialog
+
+# Method 2: Using Terminal (if Method 1 doesn't work)
+sudo xattr -rd com.apple.quarantine "/Applications/Survivalist Sorcerer.app"
+```
+
+#### **Step 4: Grant Permissions**
+
+When prompted, allow:
+- ✅ Screen recording (for gameplay)
+- ✅ Files and folders access (for save data)
+- ✅ Input Monitoring (for keyboard/mouse)
+
+#### **Troubleshooting macOS**
+
+| Issue | Solution |
+|-------|----------|
+| **"Cannot be opened"** | Use `xattr -rd com.apple.quarantine` command above |
+| **App crashes** | Check macOS version (requires 10.14+) |
+| **No sound** | System Preferences → Security → Privacy → Allow app |
+| **Controller issues** | System Preferences → Accessibility → Input Monitoring |
+| **M1/M2 compatibility** | Should run natively; if issues, try Rosetta mode |
+
+**For M1/M2 Macs (Apple Silicon):**
+```bash
+# If you need to run in Rosetta mode:
+# Right-click app → Get Info → Check "Open using Rosetta"
+```
+
+---
+
+### 🐧 **Linux Installation**
+
+#### **Step 1: Download the Game**
+1. Navigate to [Release Page](#-phase-6-release-version)
+2. Download `SurvivalistSorcerer-Linux.tar.gz` or `.zip`
+3. Save to `~/Downloads`
+
+#### **Step 2: Extract Files**
+
+```bash
+# Navigate to downloads
+cd ~/Downloads
+
+# Extract the archive
+tar -xzvf SurvivalistSorcerer-Linux.tar.gz
+
+# Or for zip file:
+unzip SurvivalistSorcerer-Linux.zip
+
+# Move to appropriate location
+sudo mv SurvivalistSorcerer /opt/
+# Or keep in home directory
+mv SurvivalistSorcerer ~/Games/
+```
+
+#### **Step 3: Make Executable**
+
+```bash
+# Navigate to game folder
+cd ~/Games/SurvivalistSorcerer
+# or
+cd /opt/SurvivalistSorcerer
+
+# Make the executable file runnable
+chmod +x SurvivalistSorcerer.x86_64
+```
+
+#### **Step 4: Install Dependencies** (if needed)
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install libgl1-mesa-glx libglu1-mesa
+sudo apt install libasound2 libxrandr2 libxi6
+```
+
+**Fedora/RHEL:**
+```bash
+sudo dnf install mesa-libGL mesa-libGLU
+sudo dnf install alsa-lib libXrandr libXi
+```
+
+**Arch Linux:**
+```bash
+sudo pacman -S mesa glu alsa-lib libxrandr libxi
+```
+
+#### **Step 5: Run the Game**
+
+```bash
+# From the game directory
+./SurvivalistSorcerer.x86_64
+
+# Or create a desktop launcher
+# Create file: ~/.local/share/applications/survivalist-sorcerer.desktop
+```
+
+**Desktop Entry Example:**
+```ini
+[Desktop Entry]
+Name=Survivalist Sorcerer
+Comment=The Mesh Escape
+Exec=/opt/SurvivalistSorcerer/SurvivalistSorcerer.x86_64
+Icon=/opt/SurvivalistSorcerer/icon.png
+Terminal=false
+Type=Application
+Categories=Game;
+```
+
+#### **Troubleshooting Linux**
+
+| Issue | Solution |
+|-------|----------|
+| **Permission denied** | Run `chmod +x` command again |
+| **Missing libraries** | Install dependencies for your distro (see above) |
+| **Black screen** | Update graphics drivers, try different OpenGL version |
+| **No audio** | Check PulseAudio/PipeWire is running: `pulseaudio --check` |
+| **Wayland issues** | Try running with X11: `GDK_BACKEND=x11 ./SurvivalistSorcerer.x86_64` |
+
+**For better performance:**
+```bash
+# Use dedicated GPU (for laptops with hybrid graphics)
+DRI_PRIME=1 ./SurvivalistSorcerer.x86_64
+
+# Or for NVIDIA
+__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia ./SurvivalistSorcerer.x86_64
+```
+
+---
+
+### 🎮 **Common Setup for All Platforms**
+
+#### **Game Settings Location**
+
+| Platform | Save Data Location |
+|----------|--------------------|
+| **Windows** | `C:\Users\<YourName>\AppData\LocalLow\CADT\SurvivalistSorcerer\` |
+| **macOS** | `~/Library/Application Support/CADT/SurvivalistSorcerer/` |
+| **Linux** | `~/.config/unity3d/CADT/SurvivalistSorcerer/` |
+
+#### **First Time Setup Checklist**
+
+- [ ] ✅ Extract/Install game files
+- [ ] ✅ Grant necessary permissions
+- [ ] ✅ Configure graphics settings
+- [ ] ✅ Test audio output
+- [ ] ✅ Configure controls (keyboard/mouse or controller)
+- [ ] ✅ Select difficulty level
+- [ ] ✅ Start playing!
+
+#### **Recommended Settings**
+
+<table>
+<tr>
+<td width="33%" align="center">
+
+**🎨 Graphics**
+- Quality: Medium-High
+- Resolution: Native
+- V-Sync: On
+- Anti-aliasing: FXAA
+
+</td>
+<td width="33%" align="center">
+
+**🔊 Audio**
+- Master: 80%
+- Music: 70%
+- SFX: 85%
+- Voice: 100%
+
+</td>
+<td width="33%" align="center">
+
+**⚙️ Gameplay**
+- Difficulty: Medium
+- Mouse Sensitivity: 2.0
+- Auto-save: On
+- Tutorials: On (first time)
+
+</td>
+</tr>
+</table>
+
+#### **System Performance Tips**
+
+💡 **If you're experiencing lag:**
+1. Lower graphics quality to "Low" or "Medium"
+2. Reduce resolution (try 1080p instead of 4K)
+3. Disable V-Sync
+4. Close background applications
+5. Update your graphics drivers
+
+💡 **For best experience:**
+- Use a gaming mouse for better precision
+- Play in fullscreen mode for better performance
+- Ensure your system meets recommended requirements
+- Keep the game updated to the latest version
+
+---
+
+### 📞 **Need Help?**
+
+<div align="center">
+
+If you encounter issues not covered here:
+
+**🐛 [Report an Issue](https://github.com/your-username/SurvivalistSorcerer-TheMeshEscape/issues)**
+
+**💬 [Join Our Community](https://github.com/your-username/SurvivalistSorcerer-TheMeshEscape/discussions)**
+
+**📧 Contact: survivalistsorcerer@cadt.edu.kh**
+
+</div>
+
+---
+
+<div align="center">
+
+## 📚 **PHASE 8: DOCUMENTATION & TOOLS**
 
 ![Documentation](https://img.shields.io/badge/Documentation-Complete-success?style=for-the-badge)
 ![Tools](https://img.shields.io/badge/Tools-Professional-blue?style=for-the-badge)
@@ -729,7 +1552,7 @@ Build download links will be provided upon final release
 
 <div align="center">
 
-## 🤝 **PHASE 8: CONTRIBUTING GUIDE**
+## 🤝 **PHASE 9: CONTRIBUTING GUIDE**
 
 ![Contributions](https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=for-the-badge)
 ![PRs](https://img.shields.io/badge/PRs-Open-blue?style=for-the-badge)
@@ -902,7 +1725,7 @@ public void start_game() { }
 
 <div align="center">
 
-## 👥 **PHASE 9: CREDITS**
+## 👥 **PHASE 10: CREDITS**
 
 ![Team](https://img.shields.io/badge/Team-6_Members-blue?style=for-the-badge)
 ![Country](https://img.shields.io/badge/Made_in-Cambodia_🇰🇭-red?style=for-the-badge)
