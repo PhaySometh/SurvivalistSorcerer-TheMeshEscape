@@ -1,0 +1,151 @@
+@startuml Survivalist Sorcerer - Deployment Diagram
+
+!theme aws-orange
+skinparam backgroundColor #FFFFFF
+skinparam nodeBackgroundColor #ECF0F1
+skinparam nodeBorderColor #2C3E50
+skinparam componentBackgroundColor #FFFFFF
+skinparam componentBorderColor #3498DB
+
+title Survivalist Sorcerer - The Mesh Escape\nDeployment Architecture
+
+node "Player Device" as PlayerDevice {
+    
+    node "Windows 10/11 (64-bit)" as Windows {
+        artifact "SurvivalistSorcerer.exe" as WinExe
+        component "IL2CPP Runtime" as WinRuntime
+        component "DirectX 11/12" as DirectX
+        
+        WinExe --> WinRuntime
+        WinRuntime --> DirectX
+    }
+    
+    node "Linux (64-bit)" as Linux {
+        artifact "SurvivalistSorcerer.x86_64" as LinuxExe
+        component "IL2CPP Runtime" as LinuxRuntime
+        component "OpenGL/Vulkan" as OpenGL
+        
+        LinuxExe --> LinuxRuntime
+        LinuxRuntime --> OpenGL
+    }
+    
+    node "macOS (Intel/Apple Silicon)" as Mac {
+        artifact "SurvivalistSorcerer.app" as MacApp
+        component "IL2CPP Runtime" as MacRuntime
+        component "Metal Graphics" as Metal
+        
+        MacApp --> MacRuntime
+        MacRuntime --> Metal
+    }
+}
+
+node "Unity Engine 2022.3.47f1" as UnityEngine {
+    
+    component "Universal Render Pipeline" as URP {
+        [Rendering Pipeline]
+        [Post-Processing]
+        [Lighting System]
+    }
+    
+    component "Core Systems" as CoreSys {
+        [Physics Engine]
+        [Animation System]
+        [Audio System]
+        [Input System]
+    }
+    
+    component "Navigation" as Nav {
+        [NavMesh Runtime]
+        [Pathfinding]
+        [Obstacle Avoidance]
+    }
+    
+    component "Scripting" as Script {
+        [Mono/.NET Runtime]
+        [C# Scripts]
+        [UnityEvents]
+    }
+}
+
+database "Persistent Storage" as Storage {
+    folder "Application Data" {
+        file "savefile.json" as SaveFile
+        file "PlayerPrefs" as Prefs
+    }
+    
+    folder "Resources" {
+        file "Scenes" as Scenes
+        file "Prefabs" as Prefabs
+        file "Audio" as Audio
+        file "Textures" as Textures
+    }
+}
+
+cloud "Asset Packages" as Assets {
+    package "Asset Store" {
+        [AllSky Free]
+        [Fantasy GUI]
+        [RPG Monsters]
+        [Hovl Studio VFX]
+        [Realistic Tree]
+    }
+}
+
+' Deployment Connections
+PlayerDevice --> UnityEngine : runs on
+UnityEngine --> Storage : reads/writes
+UnityEngine --> Assets : imports
+
+' Platform notes
+note right of Windows
+    **Minimum Requirements:**
+    - Intel Core i3
+    - 4 GB RAM
+    - Intel HD 4000
+    - DirectX 11
+    
+    **Recommended:**
+    - Intel Core i5
+    - 8 GB RAM
+    - NVIDIA GTX 1050
+    - DirectX 12
+end note
+
+note right of Linux
+    **Minimum Requirements:**
+    - Intel Core i3
+    - 4 GB RAM
+    - OpenGL 4.1+
+    
+    **Recommended:**
+    - Intel Core i5
+    - 8 GB RAM
+    - Vulkan support
+end note
+
+note right of Mac
+    **Minimum Requirements:**
+    - Intel or M1/M2
+    - 4 GB RAM
+    - Metal support
+    
+    **Recommended:**
+    - M1/M2 or Intel i5+
+    - 8 GB RAM
+    - macOS 12+
+end note
+
+note bottom of Storage
+    **Local Storage Locations:**
+    
+    Windows:
+    C:/Users/<user>/AppData/LocalLow/CADT/SurvivalistSorcerer
+    
+    Linux:
+    ~/.config/unity3d/CADT/SurvivalistSorcerer
+    
+    macOS:
+    ~/Library/Application Support/CADT/SurvivalistSorcerer
+end note
+
+@enduml

@@ -1,0 +1,154 @@
+@startuml Survivalist Sorcerer - System Architecture
+
+!theme plain
+!define CORE_COLOR #FF6B6B
+!define PLAYER_COLOR #4ECDC4
+!define ENEMY_COLOR #FFE66D
+!define UI_COLOR #95E1D3
+!define SYSTEM_COLOR #A8DADC
+
+skinparam componentStyle rectangle
+skinparam backgroundColor #F8F9FA
+skinparam shadowing false
+skinparam linetype ortho
+skinparam arrowColor #2D3436
+skinparam BorderColor #2D3436
+skinparam FontColor #2D3436
+
+title Survivalist Sorcerer - The Mesh Escape\n**System Architecture** - Clean & Simple
+
+' ==================== CORE ENGINE ====================
+package "🎮 CORE ENGINE" as CORE #FF6B6B {
+    card "**GameManager**\n[Singleton]" as GM
+    card "**WaveManager**" as WM
+    card "**GameSettings**" as GS
+    
+    GM -right-> WM
+    GM -down-> GS
+}
+
+' ==================== PLAYER LAYER ====================
+package "🧙 PLAYER" as PLAYER #4ECDC4 {
+    card "**Movement**\n& Animation" as PA
+    card "**Spell System**\n[Auto-Target]" as SS
+    card "**Health**" as PH
+    
+    PA -right-> SS
+    SS -down-> PH
+}
+
+' ==================== COMBAT LAYER ====================
+package "⚡ COMBAT" as COMBAT #A8DADC {
+    card "**Projectiles**\n[Homing]" as PROJ
+    card "**Damage System**" as DMG
+    
+    SS --> PROJ : cast
+    PROJ --> DMG : hit
+}
+
+' ==================== ENEMY LAYER ====================
+package "👹 ENEMIES" as ENEMY #FFE66D {
+    card "**AI Controller**\n[NavMesh Agent]" as AI
+    card "**Enemy Health**" as EH
+    card "**Spawner**" as SPAWN
+    
+    WM --> SPAWN
+    SPAWN -right-> AI
+    AI -down-> EH
+}
+
+' ==================== CAMERA & INPUT ====================
+package "📷 CAMERA & INPUT" as INPUT #B4A7D6 {
+    card "**Third-Person\nCamera**" as CAM
+    card "**Input Handler**" as INPUT_H
+    
+    INPUT_H -right-> CAM
+}
+
+' ==================== UI LAYER ====================
+package "🎨 UI & MENUS" as UI #95E1D3 {
+    card "**HUD**" as HUD
+    card "**Menus**\n[Menu, Pause, Results]" as MENU
+    card "**Settings**" as SET
+    
+    HUD -right-> MENU
+    MENU -down-> SET
+}
+
+' ==================== PERSISTENCE ====================
+package "💾 SAVE & DATA" as DATA #D5F4E6 {
+    card "**Save System**\n[JSON]" as SAVE
+    card "**Difficulty Config**" as DIFF
+    
+    SAVE -right-> DIFF
+}
+
+' ==================== MAIN FLOW CONNECTIONS ====================
+
+' Core controls everything
+GM -down-> ENEMY : spawns waves
+GM -down-> PLAYER : controls
+GM -right-> UI : game state
+GM --> DATA : persistence
+
+' Player to Combat
+PA --> INPUT_H : receives input
+INPUT_H --> PA : control
+SS --> DMG : calculates
+
+' Enemy to Player
+AI --> PA : detects player
+EH --> PH : takes damage
+PH --> DMG : receives damage
+
+' Camera follows player
+PA --> CAM : follows
+
+' UI updates from core
+WM --> HUD : wave info
+PH --> HUD : health bar
+GM --> MENU : show results
+
+' Settings affect game
+SET --> GS : saves
+GS --> ENEMY : difficulty
+
+' Difficulty scales enemies
+DIFF --> SPAWN : spawn rate
+DIFF --> EH : enemy stats
+
+note bottom of CORE
+  🎯 **Central Hub**
+  Manages all game state
+  Event-driven system
+end note
+
+note bottom of PLAYER
+  ⌨️ **Player Control**
+  Third-person gameplay
+  Spell-based combat
+end note
+
+note bottom of AI
+  🤖 **Smart Enemies**
+  NavMesh pathfinding
+  AI behavior trees
+end note
+
+note bottom of UI
+  🖼️ **User Interface**
+  HUD + Menus
+  Settings persistence
+end note
+
+legend right
+  |<#FF6B6B>     </back>| Core Game Management |
+  |<#4ECDC4>     </back>| Player Systems |
+  |<#A8DADC>     </back>| Combat Mechanics |
+  |<#FFE66D>     </back>| Enemy AI |
+  |<#B4A7D6>     </back>| Input & Camera |
+  |<#95E1D3>     </back>| UI & Menus |
+  |<#D5F4E6>     </back>| Data Persistence |
+endlegend
+
+@enduml
