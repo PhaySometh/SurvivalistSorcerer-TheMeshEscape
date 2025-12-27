@@ -1,0 +1,46 @@
+@startuml Survivalist Sorcerer - System Architecture
+
+!theme plain
+skinparam backgroundColor #F8F9FA
+skinparam shadowing false
+skinparam linetype ortho
+
+title Survivalist Sorcerer - System Architecture
+
+node "💻 HARDWARE" #FF9999 {
+    component "CPU" as CPU
+    component "GPU" as GPU
+    component "RAM" as RAM
+}
+
+node "🎮 GAME" #FF6B6B {
+    component "Core" as CORE
+    component "Player" as PLAYER
+    component "Enemies" as ENEMY
+    component "Combat" as COMBAT
+    component "UI" as UI
+}
+
+node "🎨 RENDER" #FFB6B6 {
+    component "Graphics" as GFX
+}
+
+node "💾 DATA" #D5F4E6 {
+    component "Save" as SAVE
+}
+
+CPU --> CORE : logic
+GPU --> GFX : render
+RAM --> CORE : memory
+CORE --> PLAYER : control
+CORE --> ENEMY : spawn
+PLAYER --> COMBAT : cast
+COMBAT --> ENEMY : damage
+ENEMY --> PLAYER : attack
+CORE --> UI : update
+CORE --> SAVE : save
+PLAYER --> GFX : mesh
+ENEMY --> GFX : mesh
+UI --> GFX : draw
+
+@enduml

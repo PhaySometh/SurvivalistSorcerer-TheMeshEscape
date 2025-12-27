@@ -1,0 +1,304 @@
+@startuml Survivalist Sorcerer - Class Diagram
+
+!theme vibrant
+skinparam backgroundColor #FAFAFA
+skinparam classBackgroundColor #FFFFFF
+skinparam classBorderColor #2C3E50
+skinparam ArrowColor #3498DB
+
+title Survivalist Sorcerer - The Mesh Escape\nCore Class Diagram
+
+' ==================== SINGLETON MANAGERS ====================
+class GameManager <<Singleton>> {
+    - {static} Instance : GameManager
+    + levelTimeLimit : float
+    + currentScore : int
+    + currentExperience : int
+    + timeRemaining : float
+    + isGameActive : bool
+    + isInSuddenDeath : bool
+    --
+    + StartGame() : void
+    + AddScore(amount : int) : void
+    + AddExperience(amount : int) : void
+    + GameOver() : void
+    + LevelComplete() : void
+    - TriggerSuddenDeath() : void
+}
+
+class GameSettings <<Singleton>> {
+    - {static} Instance : GameSettings
+    + currentDifficulty : Difficulty
+    + currentMap : GameMap
+    --
+    + GetWaveConfig() : WaveConfig
+    + SetDifficulty(difficulty : Difficulty) : void
+    + SetMap(map : GameMap) : void
+    - SaveSettings() : void
+    - LoadSettings() : void
+}
+
+class SaveSystem <<Singleton>> {
+    - {static} Instance : SaveSystem
+    + currentData : PlayerData
+    --
+    + SaveGame() : void
+    + LoadGame() : void
+    + AddCoins(amount : int) : void
+    + CheckHighScore(score : int) : void
+}
+
+' ==================== WAVE MANAGEMENT ====================
+class WaveManager {
+    + currentWave : int
+    + currentState : WaveState
+    + totalWaves : int
+    + waveDuration : float
+    + bufferDuration : float
+    + enemySpawner : EnemySpawner
+    + bossPrefab : GameObject
+    --
+    + TriggerSuddenDeath() : void
+    - StartGameLoop() : IEnumerator
+    - StartWave() : IEnumerator
+    - StartBossFight() : IEnumerator
+}
+
+enum WaveState {
+    WaitingToStart
+    WaveInProgress
+    PreparationBuffer
+    BossFight
+    SuddenDeath
+    Victory
+}
+
+class EnemySpawner {
+    + enemyPrefabs : GameObject[]
+    + spawnPoints : Transform[]
+    + spawnInterval : float
+    + maxEnemiesPerWave : int
+    --
+    + SpawnWave(waveNumber : int) : void
+    + StopSpawning() : void
+    - SpawnEnemy(enemyType : GameObject) : void
+}
+
+' ==================== PLAYER SYSTEMS ====================
+class PlayerMovementScript {
+    + walkSpeed : float
+    + runSpeed : float
+    + jumpPower : float
+    + IsSprinting : bool
+    - characterController : CharacterController
+    - animController : PlayerAnimatorController
+    --
+    - HandleMovement() : void
+    - HandleActionInputs() : void
+}
+
+class PlayerAnimatorController {
+    - _animator : Animator
+    - _speedHash : int
+    - _attackTriggerHash : int
+    + IsAttacking : bool
+    --
+    + SetMovement(inputX : float, inputY : float) : void
+    + TriggerAttack(attackIndex : int) : void
+    + TriggerJump() : void
+    + TriggerGetHit() : void
+    + TriggerDeath() : void
+}
+
+class WizardSpellSystem {
+    + lightSpellDamage : float
+    + heavySpellDamage : float
+    + lightSpellPrefab : GameObject
+    + heavySpellPrefab : GameObject
+    + autoTargetEnabled : bool
+    + enableHoming : bool
+    --
+    - CastLightSpell() : void
+    - CastHeavySpell() : void
+    - FindNearestEnemy() : Transform
+    - SpawnProjectile(prefab : GameObject) : void
+}
+
+class MagicProjectile {
+    + damage : float
+    + speed : float
+    + homingEnabled : bool
+    + target : Transform
+    --
+    - Update() : void
+    - OnTriggerEnter(other : Collider) : void
+    - ApplyHoming() : void
+}
+
+' ==================== HEALTH SYSTEM ====================
+class HealthSystem {
+    + maxHealth : float
+    + currentHealth : float
+    + IsDead : bool
+    --
+    + TakeDamage(damage : float) : void
+    + Heal(amount : float) : void
+    + SetHealth(health : float) : void
+    + GetHealthPercentage() : float
+    - Die() : void
+}
+
+' ==================== AI SYSTEMS ====================
+class EnemyAI {
+    + agent : NavMeshAgent
+    + anim : Animator
+    + player : Transform
+    + attackRange : float
+    + attackCooldown : float
+    --
+    - Update() : void
+    - ChasePlayer() : void
+    - AttackPlayer() : void
+    - UpdateMovementAnimation() : void
+}
+
+class DifficultyScaler {
+    + scaleHealth : bool
+    + scaleDamage : bool
+    --
+    - ApplyDifficultyScaling() : void
+    - ScaleDamage(multiplier : float) : void
+}
+
+' ==================== UI SYSTEMS ====================
+class UIManager {
+    + scoreText : TextMeshProUGUI
+    + timerText : TextMeshProUGUI
+    + healthBar : Slider
+    --
+    + UpdateScore(score : int) : void
+    + UpdateTimer(timeRemaining : float) : void
+    + UpdateHealth(current : float, max : float) : void
+    + SetTimerSuddenDeath(active : bool) : void
+}
+
+class MainMenu {
+    + StartGame() : void
+    + OpenSettings() : void
+    + OpenCredits() : void
+    + QuitGame() : void
+}
+
+class PauseManager {
+    + isPaused : bool
+    + pausePanel : GameObject
+    --
+    + TogglePause() : void
+    + Resume() : void
+    + RestartLevel() : void
+    + ReturnToMenu() : void
+}
+
+' ==================== CAMERA ====================
+class ThirdPersonCameraController {
+    + playerCamera : Camera
+    + playerCharacter : Transform
+    + defaultDistance : float
+    + mouseSensitivity : float
+    + collisionLayerMask : LayerMask
+    --
+    - Update() : void
+    - HandleRotation() : void
+    - HandleZoom() : void
+    - CheckCollision() : void
+}
+
+' ==================== DATA STRUCTURES ====================
+class WaveConfig {
+    + startWave : int
+    + endWave : int
+    + totalWaves : int
+    + waveDuration : float
+    + bufferDuration : float
+    + timeLimit : float
+    + enemyHealthMultiplier : float
+    + enemyDamageMultiplier : float
+    + startWithSuddenDeath : bool
+    + coinsRequired : int
+}
+
+class PlayerData {
+    + totalCoins : int
+    + highScore : int
+    + unlockedLevels : List<int>
+}
+
+enum Difficulty {
+    Easy
+    Medium
+    Hard
+    Default
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' Manager relationships
+GameManager "1" --> "1" WaveManager : manages
+GameManager "1" --> "1" GameSettings : reads
+GameSettings "1" --> "1" WaveConfig : provides
+SaveSystem "1" --> "1" PlayerData : stores
+
+' Wave Management
+WaveManager "1" --> "1" EnemySpawner : controls
+WaveManager "1" --> "*" WaveState : state machine
+
+' Player relationships
+PlayerMovementScript "1" --> "1" PlayerAnimatorController : controls
+WizardSpellSystem "1" --> "1" PlayerAnimatorController : triggers
+WizardSpellSystem "1" --> "*" MagicProjectile : spawns
+PlayerMovementScript "1" --> "1" HealthSystem : uses
+WizardSpellSystem "1" --> "1" HealthSystem : uses
+
+' AI relationships
+EnemyAI "1" --> "1" HealthSystem : has
+EnemySpawner "1" --> "*" EnemyAI : spawns
+DifficultyScaler "1" --> "1" HealthSystem : modifies
+GameSettings "1" --> "*" DifficultyScaler : configures
+
+' Combat relationships
+MagicProjectile "*" --> "1" HealthSystem : damages
+EnemyAI "*" --> "1" HealthSystem : damages player
+
+' UI relationships
+UIManager "1" --> "1" GameManager : observes
+MainMenu "1" --> "1" GameSettings : configures
+PauseManager "1" --> "1" GameManager : controls
+
+' Camera
+ThirdPersonCameraController "1" --> "1" PlayerMovementScript : follows
+
+note right of GameManager
+  **Singleton Pattern**
+  Central hub for game state
+  Event-driven architecture
+end note
+
+note right of WizardSpellSystem
+  **Auto-Targeting**
+  Homing projectiles
+  Multiple spell types
+end note
+
+note right of EnemyAI
+  **NavMesh Agent**
+  State machine pattern
+  Animation integration
+end note
+
+note bottom of HealthSystem
+  **Shared Component**
+  Used by both player & enemies
+  UnityEvent callbacks
+end note
+
+@enduml
