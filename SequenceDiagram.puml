@@ -1,0 +1,160 @@
+@startuml Survivalist Sorcerer - Sequence Diagram
+
+!theme cerulean
+skinparam backgroundColor #FAFAFA
+skinparam sequenceArrowColor #2C3E50
+skinparam sequenceLifeLineBorderColor #3498DB
+skinparam sequenceParticipantBackgroundColor #ECF0F1
+
+title Survivalist Sorcerer - The Mesh Escape\nPlayer Combat Sequence Diagram
+
+actor Player
+participant "PlayerMovementScript" as PMS
+participant "WizardSpellSystem" as WSS
+participant "PlayerAnimatorController" as PAC
+participant "MagicProjectile" as MP
+participant "EnemyAI" as EA
+participant "HealthSystem" as HS
+participant "GameManager" as GM
+
+== Game Start ==
+Player -> PMS : Press WASD
+activate PMS
+PMS -> PAC : SetMovement(x, y)
+activate PAC
+PAC -> PAC : Update animator parameters
+PAC --> PMS : Animation triggered
+deactivate PAC
+deactivate PMS
+
+== Spell Casting (Light Spell) ==
+Player -> WSS : Left Mouse Click
+activate WSS
+
+WSS -> WSS : Check cooldown
+alt Cooldown ready
+    WSS -> WSS : FindNearestEnemy()
+    WSS -> PAC : TriggerAttack(1)
+    activate PAC
+    PAC -> PAC : Set attack trigger
+    PAC --> WSS : Attack animation started
+    deactivate PAC
+    
+    WSS -> WSS : Wait for cast delay (0.2s)
+    WSS -> MP : SpawnProjectile(lightSpellPrefab)
+    activate MP
+    
+    note right of MP
+        Projectile created at
+        spell spawn point
+    end note
+    
+    WSS -> MP : Set target & damage
+    WSS --> Player : Visual/Audio feedback
+    deactivate WSS
+    
+    == Projectile Travel ==
+    loop While projectile active
+        MP -> MP : Move towards target
+        alt Homing enabled
+            MP -> MP : ApplyHoming()
+        end
+    end
+    
+    == Collision Detection ==
+    MP -> EA : OnTriggerEnter(collider)
+    activate EA
+    MP -> HS : TakeDamage(500)
+    activate HS
+    
+    HS -> HS : currentHealth -= damage
+    HS -> EA : OnTakeDamage event
+    EA -> PAC : PlayDamageAnimation()
+    
+    alt Enemy health <= 0
+        HS -> EA : OnDeath event
+        EA -> EA : Die()
+        EA -> GM : Add score/experience
+        activate GM
+        GM -> GM : currentScore += points
+        GM --> EA : Score updated
+        deactivate GM
+        EA -> EA : Destroy enemy
+        deactivate EA
+    else Enemy still alive
+        EA -> EA : Continue chasing
+    end
+    
+    deactivate HS
+    MP -> MP : Destroy()
+    deactivate MP
+    
+else Cooldown not ready
+    WSS --> Player : Cannot cast yet
+    deactivate WSS
+end
+
+== Enemy Attack ==
+EA -> PMS : Chase player
+activate EA
+EA -> EA : Check distance
+
+alt Player in attack range
+    EA -> EA : AttackPlayer()
+    EA -> PAC : Attack animation
+    
+    EA -> HS : TakeDamage(enemyDamage)
+    activate HS
+    HS -> HS : currentHealth -= damage
+    
+    alt Player health > 0
+        HS -> PAC : TriggerGetHit()
+        activate PAC
+        PAC -> PAC : Play damage animation
+        deactivate PAC
+        HS --> Player : Visual feedback
+    else Player health <= 0
+        HS -> PAC : TriggerDeath()
+        activate PAC
+        PAC -> PAC : Play death animation
+        deactivate PAC
+        HS -> GM : GameOver()
+        activate GM
+        GM -> GM : isGameActive = false
+        GM -> GM : Show Game Over UI
+        deactivate GM
+    end
+    deactivate HS
+else Player out of range
+    EA -> EA : ChasePlayer()
+    EA -> EA : agent.SetDestination(player)
+end
+deactivate EA
+
+== Wave Complete ==
+GM -> GM : Check wave status
+activate GM
+
+alt All enemies defeated
+    GM -> GM : WaveComplete()
+    GM -> Player : Show wave cleared message
+    GM -> GM : Start buffer timer (15s)
+    
+    alt More waves remaining
+        GM -> GM : StartNextWave()
+    else Final wave complete
+        GM -> GM : StartBossFight()
+    end
+else Time limit reached
+    alt Not in sudden death
+        GM -> GM : TriggerSuddenDeath()
+        GM -> Player : "Sudden Death!" alert
+        GM -> GM : timeRemaining = 120s
+    else Sudden death expired
+        GM -> GM : GameOver()
+        GM -> Player : Show Game Over screen
+    end
+end
+deactivate GM
+
+@enduml
