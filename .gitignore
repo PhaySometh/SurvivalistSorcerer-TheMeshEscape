@@ -80,5 +80,3 @@ Desktop.ini
 
 # Ignore the ignore.conf if not needed
 ignore.conf
-# Large build files
-GameBuild/*.zip
