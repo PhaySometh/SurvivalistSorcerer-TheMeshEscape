@@ -15,80 +15,19 @@
 ███████║╚██████╔╝██║  ██║╚██████╗███████╗██║  ██║███████╗██║  ██║                  
 ╚══════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝                  
 ```
+# 🧙‍♂️ Survivalist Sorcerer: The Mesh Escape
 
-# 🧙‍♂️ **THE MESH ESCAPE** 🔮
+                 
 
 ![Unity](https://img.shields.io/badge/Unity-2022.3.47f1-black?logo=unity&style=for-the-badge)
-![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue?style=for-the-badge&logo=windows)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-Educational-green?style=for-the-badge)
-![Version](https://img.shields.io/badge/Version-1.0.0-orange?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)
-![Made With](https://img.shields.io/badge/Made%20With-❤️%20in%20Cambodia-red?style=for-the-badge)
 
-### 🎮 **A 3D Action-Adventure Survival Game** 🎮
+### A 3D Action-Adventure Survival Game
 
-*🌟 Escape the mesh realm by defeating waves of enemies and conquering the final boss! 🌟*
-
-[▶️ Play Now](#-phase-6-release-version) | [📖 Documentation](#-table-of-contents) | [🤝 Contribute](#-phase-9-contributing-guide) | [👥 Credits](#-phase-10-credits)
-
----
-
-<img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=22&duration=3000&pause=1000&color=F75C03&center=true&vCenter=true&width=600&lines=Master+Your+Magical+Powers!;Defeat+Waves+of+Enemies!;Conquer+The+Final+Boss!;Escape+The+Mesh+Realm!" alt="Typing SVG" />
+*Escape the mesh realm by defeating waves of enemies and conquering the final boss!*
 
 </div>
-
----
-
-<div align="center">
-
-## 📋 **TABLE OF CONTENTS**
-
-</div>
-
-<table align="center">
-<tr>
-<td>
-
-### 🎯 **Quick Navigation**
-
-- 🎮 **[Phase 1: How to Play](#-phase-1-how-to-play)**
-  - Game controls and mechanics
-  
-- 💻 **[Phase 2: System Requirements](#-phase-2-system-requirements)**
-  - Hardware specifications
-  
-- 📖 **[Phase 3: About the Game](#-phase-3-about-the-game)**
-  - Story and gameplay overview
-  
-- ⭐ **[Phase 4: Unique Features](#-phase-4-unique-features--bonus-implementations)**
-  - Advanced implementations
-  
-- 🔧 **[Phase 5: Technical Report](#-phase-5-technical-report)**
-  - Architecture and code
-
-</td>
-<td>
-
-### 🚀 **Resources**
-
-- 📦 **[Phase 6: Release Version](#-phase-6-release-version)**
-  - Download and build info
-  
-- 🎮 **[Phase 7: Installation & Setup](#-phase-7-installation--setup)**
-  - How to install and run the game
-  
-- 📚 **[Phase 8: Documentation & Tools](#-phase-8-documentation--tools)**
-  - Development resources
-  
-- 🤝 **[Phase 9: Contributing Guide](#-phase-9-contributing-guide)**
-  - How to contribute
-  
-- 👥 **[Phase 10: Credits](#-phase-10-credits)**
-  - Team and acknowledgments
-
-</td>
-</tr>
-</table>
 
 ---
 
@@ -381,606 +320,7 @@ Extreme Power
 
 <div align="center">
 
-## ⭐ **PHASE 4: UNIQUE FEATURES & BONUS IMPLEMENTATIONS**
-
-![Advanced](https://img.shields.io/badge/Level-Advanced-red?style=for-the-badge)
-![Quality](https://img.shields.io/badge/Quality-Production_Ready-brightgreen?style=for-the-badge)
-![Innovation](https://img.shields.io/badge/Innovation-High-blue?style=for-the-badge)
-
-**🚀 This project showcases advanced Unity features & professional game development practices! 🚀**
-
-</div>
-
----
-
-<div align="center">
-
-### 🏆 **FEATURE HIGHLIGHTS**
-
-<table>
-<tr>
-<td align="center" width="14%">
-
-### 🔲
-**Occlusion Culling**
-
-</td>
-<td align="center" width="14%">
-
-### 🗺️
-**NavMesh**
-
-</td>
-<td align="center" width="14%">
-
-### 🤖
-**AI Behavior**
-
-</td>
-<td align="center" width="14%">
-
-### 🎬
-**Animations**
-
-</td>
-<td align="center" width="14%">
-
-### 📷
-**Camera**
-
-</td>
-<td align="center" width="14%">
-
-### 💾
-**Save**
-
-</td>
-<td align="center" width="14%">
-
-### ⚙️
-**Settings**
-
-</td>
-</tr>
-</table>
-
-</div>
-
----
-
-### 1️⃣ 🔲 **Occlusion Culling System**
-
-<table>
-<tr>
-<td width="60%">
-
-**What is Occlusion Culling?**
-
-A rendering optimization technique that prevents Unity from drawing objects that are hidden behind other objects (occluded from the camera's view).
-
-**Implementation Details:**
-- ✅ **Baked Occlusion Data** for all static objects
-- ✅ **Cell-based visibility** computation
-- ✅ **PVS (Potentially Visible Set)** calculations
-- ✅ Integrated with Unity's **Umbra** system
-
-**Performance Impact:**
-| Without | With Occlusion |
-|---------|----------------|
-| ~1000 draw calls | ~300 draw calls |
-| 45 FPS | 60+ FPS |
-| High GPU load | Optimized |
-
-</td>
-<td width="40%">
-
-**📊 How It Works:**
-
-```
-┌──────────────────┐
-│  Camera View     │
-│  🎥 → 🏛️          │
-│       │          │
-│   [VISIBLE]     │
-└──────────────────┘
-        │
-        ▼ Hidden behind building
-┌──────────────────┐
-│  🌳🌲🗿 [NOT RENDERED] │
-│  Saves GPU power!  │
-└──────────────────┘
-```
-
-**Unity Settings:**
-- Window → Rendering → Occlusion Culling
-- Bake button for static objects
-- Visualization mode for debugging
-
-</td>
-</tr>
-</table>
-
----
-
-### 2️⃣ 🗺️ **Navigation Mesh (NavMesh) System**
-
-<table>
-<tr>
-<td width="50%">
-
-**🎯 Purpose:**
-Enables AI enemies to navigate the 3D environment intelligently, finding paths around obstacles.
-
-**🛠️ Baked Elements:**
-
-| Object Type | NavMesh Setting |
-|-------------|----------------|
-| 🏞️ **Terrain** | Walkable Area |
-| 🏛️ **Buildings** | Not Walkable (Obstacle) |
-| 🌳 **Trees** | Carve Hole |
-| 🪨 **Rocks** | Not Walkable |
-| 🏠 **Props** | Static Obstacle |
-| 🟩 **Ground Tiles** | Walkable Area |
-
-**⚙️ NavMesh Settings:**
-```
-Agent Radius: 0.5m
-Agent Height: 2.0m
-Max Slope: 45°
-Step Height: 0.4m
-```
-
-</td>
-<td width="50%">
-
-**🔄 Runtime Features:**
-
-```csharp
-// Check if enemy is on NavMesh
-if (!agent.isOnNavMesh)
-{
-    NavMeshHit hit;
-    if (NavMesh.SamplePosition(transform.position, 
-        out hit, 2.0f, NavMesh.AllAreas))
-    {
-        agent.Warp(hit.position);
-    }
-}
-```
-
-**✨ Benefits:**
-- 🧠 **Smart pathfinding** around obstacles
-- ⚡ **Real-time recalculation** when needed
-- 🎯 **Precise player tracking**
-- 🚫 **Automatic obstacle avoidance**
-
-**📁 Files Using NavMesh:**
-- `EnemyAI.cs`
-- `EnemySpawner.cs`
-- All enemy prefabs
-
-</td>
-</tr>
-</table>
-
----
-
-### 3️⃣ 🤖 **AI Enemy Behavior System**
-
-<table>
-<tr>
-<td width="100%">
-
-**🧠 State Machine Architecture:**
-
-```
-   ┌─────────┐
-   │  IDLE   │ ◄── Enemy spawns here
-   └────┬────┘
-        │ Player detected (distance check)
-        ▼
-   ┌─────────┐
-   │  CHASE  │ ◄── NavMeshAgent.SetDestination(player)
-   └────┬────┘
-        │ Within attackRange (1.5m)
-        ▼
-   ┌─────────┐
-   │ ATTACK  │ ◄── Random attack animation (1-3)
-   └────┬────┘
-        │ Health <= 0
-        ▼
-   ┌─────────┐
-   │  DEATH  │ ◄── Die animation + destroy
-   └─────────┘
-```
-
-</td>
-</tr>
-</table>
-
-**💻 Core Implementation (`EnemyAI.cs`):**
-
-```csharp
-public class EnemyAI : MonoBehaviour
-{
-    [Header("References")]
-    public NavMeshAgent agent;        // Unity Navigation
-    public Animator anim;             // Animation controller
-    public Transform player;          // Target to chase
-
-    [Header("Combat Settings")]
-    public float attackRange = 1.5f;  // Distance to trigger attack
-    public float attackCooldown = 2.0f;
-    
-    private void Update()
-    {
-        float distanceToPlayer = Vector3.Distance(
-            transform.position, player.position);
-
-        if (distanceToPlayer <= attackRange)
-            AttackPlayer();  // ⚔️ Attack!
-        else
-            ChasePlayer();   // 🏃 Chase!
-    }
-    
-    private void ChasePlayer()
-    {
-        agent.isStopped = false;
-        agent.SetDestination(player.position);  // NavMesh pathfinding
-    }
-    
-    private void AttackPlayer()
-    {
-        agent.isStopped = true;  // Stop moving
-        // Random attack animation (1-3)
-        int attackRoll = Random.Range(1, 4);
-        anim.SetTrigger($"attack_0{attackRoll}");
-    }
-}
-```
-
-<table>
-<tr>
-<td width="50%">
-
-**👹 Enemy Types & Configurations:**
-
-| Enemy | Attack Range | Cooldown | Speed |
-|-------|-------------|----------|-------|
-| 🟢 Slime | 1.0m | 2.5s | Slow |
-| 🐢 Turtle | 1.2m | 2.0s | Medium |
-| 💀 Skeleton | 1.5m | 1.5s | Fast |
-| 🗿 Golem | 2.0m | 3.0s | Slow |
-| 🐂 Bull Boss | 2.5m | 1.0s | Fast |
-
-</td>
-<td width="50%">
-
-**✨ Features:**
-- ✅ **Auto player detection** using `FindGameObjectWithTag`
-- ✅ **Random attack patterns** (3 variations)
-- ✅ **Damage & death animations** via UnityEvents
-- ✅ **NavMesh recovery** if enemy falls off mesh
-- ✅ **Gizmo visualization** for debugging
-
-</td>
-</tr>
-</table>
-
----
-
-### 4️⃣ 🎬 **Rich Animation System**
-
-<table>
-<tr>
-<td width="50%">
-
-**🧙‍♂️ Player Animation Controller:**
-
-`PlayerAnimatorController.cs` - 302 lines of animation magic!
-
-**⚡ Performance Optimization:**
-```csharp
-// Hash IDs instead of string lookups
-private int _speedHash = 
-    Animator.StringToHash("Speed");
-private int _attackTriggerHash = 
-    Animator.StringToHash("Attack");
-    
-// 10x faster than animator.SetTrigger("Speed")
-animator.SetFloat(_speedHash, value);
-```
-
-</td>
-<td width="50%">
-
-**🎮 Animation Parameters:**
-
-| Type | Parameters |
-|------|------------|
-| **Locomotion** | Speed, InputX, InputY, IsGrounded, IsSprinting |
-| **Actions** | Jump, IsCrouching, Interact, PickUp, PotionDrink |
-| **Combat** | Attack, AttackIndex, AirAttack, IsDefending, GetHit |
-| **States** | IsDizzy, Victory, Die, Respawn |
-
-</td>
-</tr>
-</table>
-
-**🎭 Complete Animation List:**
-
-<table>
-<tr>
-<td width="50%">
-
-**🧙 Player Animations (15+)**
-
-| Category | Animations |
-|----------|------------|
-| 🚶 **Movement** | Idle, Walk, Run, Sprint |
-| 🦘 **Jumping** | Jump, AirAttack, Landing |
-| 🙇 **Crouch** | Crouch Idle, Crouch Walk |
-| ⚔️ **Combat** | Attack01, Attack02, Attack03 |
-| 🌀 **Air Combat** | JumpAirAttack, JumpUpAttack |
-| 🛡️ **Defense** | IsDefending, DefendHit |
-| 💥 **Damage** | GetHit, Die, DieRecovery |
-| ✨ **Special** | Victory, PotionDrink, Interact |
-
-</td>
-<td width="50%">
-
-**👹 Enemy Animations (per type)**
-
-| Enemy | Animation Count |
-|-------|----------------|
-| 🐂 **Bull Boss** | 8 (idle, run, attack_01-03, damage, die, charge) |
-| 🟢 **Slime** | 5 (idle, move, attack, damage, die) |
-| 🐢 **Turtle** | 6 (idle, walk, attack, shell, damage, die) |
-| 💀 **Skeleton** | 7 (idle, walk, run, attack_01-02, damage, die) |
-| 🗿 **Golem** | 6 (idle, walk, attack, stomp, damage, die) |
-
-**Total: 40+ unique animations!**
-
-</td>
-</tr>
-</table>
-
-**🔄 Animation State Machine Flow:**
-
-```
-                    ┌─────────┐
-                    │  IDLE   │
-                    └────┬────┘
-           WASD     │     Space
-        ┌───────────┴─────────┐
-        ▼                     ▼
-┌──────────┐         ┌──────────┐
-│ WALK/RUN │         │   JUMP   │
-└─────┬────┘         └────┬─────┘
-  Shift│                  │LMB
-       ▼                  ▼
-┌──────────┐         ┌────────────┐
-│  SPRINT  │         │ AIR ATTACK │
-└──────────┘         └────────────┘
-        │                     │
-        └─────────┬───────────┘
-    LMB/RMB   ▼
-        ┌─────────┐
-        │ ATTACK  │ → Attack01, Attack02, Attack03
-        └─────────┘
-```
-
----
-
-### 5️⃣ 📷 **Third-Person Camera System**
-
-<table>
-<tr>
-<td width="50%">
-
-**🎬 Professional Camera Features:**
-
-`ThirdPersonCameraController.cs` - 316 lines!
-
-**📍 Camera Settings:**
-```csharp
-[Header("Distance Settings")]
-public float defaultDistance = 3f;
-public float minDistance = 1f;    // Collision
-public float maxDistance = 5f;    // Zoom out
-public float defaultHeight = 0.6f; // Shoulder
-
-[Header("Rotation Settings")]
-public float mouseSensitivity = 2f;
-public float verticalRotationLimit = 45f;
-public float rotationSmoothTime = 0.1f;
-
-[Header("FOV Settings")]
-public float defaultFOV = 60f;
-public float sprintFOV = 70f;  // Zoom effect
-```
-
-</td>
-<td width="50%">
-
-**🛡️ Collision Detection:**
-
-```csharp
-// Raycast from player to camera
-RaycastHit hit;
-if (Physics.Raycast(playerPos, direction, 
-    out hit, distance, collisionLayerMask))
-{
-    // Move camera closer to avoid wall
-    float safeDistance = hit.distance - 0.2f;
-    currentDistance = Mathf.Max(
-        safeDistance, minDistance);
-}
-```
-
-**✨ Camera Features:**
-| Feature | Implementation |
-|---------|---------------|
-| 🎯 Over-shoulder | Offset positioning |
-| 🧱 Wall avoidance | Raycast collision |
-| 🌀 Smooth follow | SmoothDamp |
-| 🔍 FOV zoom | Sprint detection |
-| 🖥️ Scroll zoom | Mouse wheel input |
-
-</td>
-</tr>
-</table>
-
-**🔄 Update Loop (LateUpdate):**
-
-```csharp
-void LateUpdate()
-{
-    // 1. Calculate desired position (behind player)
-    CalculateCameraPosition();
-    
-    // 2. Check for wall collisions
-    if (avoidClipping)
-        AdjustCameraForCollisions();
-    
-    // 3. Smooth movement to target
-    playerCamera.transform.position = Vector3.SmoothDamp(
-        currentPos, targetPos, ref velocity, followSmoothTime);
-    
-    // 4. Always look at player
-    playerCamera.transform.LookAt(playerHead);
-}
-```
-
----
-
-### 6️⃣ 💾 **Save System (JSON Persistence)**
-
-<table>
-<tr>
-<td width="50%">
-
-**📁 Save File Structure:**
-
-```json
-{
-    "totalCoins": 1250,
-    "highScore": 9500,
-    "unlockedLevels": [1, 2, 3]
-}
-```
-
-**📍 Save Location:**
-| Platform | Path |
-|----------|------|
-| Windows | `%APPDATA%/LocalLow/CADT/SurvivalistSorcerer/` |
-| macOS | `~/Library/Application Support/CADT/` |
-| Linux | `~/.config/unity3d/CADT/` |
-
-</td>
-<td width="50%">
-
-**💻 Implementation (`SaveSystem.cs`):**
-
-```csharp
-[System.Serializable]
-public class PlayerData
-{
-    public int totalCoins;
-    public int highScore;
-    public List<int> unlockedLevels;
-}
-
-public void SaveGame()
-{
-    string json = JsonUtility.ToJson(
-        currentData, true);  // Pretty print
-    File.WriteAllText(saveFilePath, json);
-}
-
-public void LoadGame()
-{
-    if (File.Exists(saveFilePath))
-    {
-        string json = File.ReadAllText(saveFilePath);
-        currentData = JsonUtility.FromJson
-            <PlayerData>(json);
-    }
-}
-```
-
-**✅ Singleton Pattern** for global access
-
-</td>
-</tr>
-</table>
-
----
-
-### 7️⃣ ⚙️ **Settings & Difficulty System**
-
-<table>
-<tr>
-<td width="100%">
-
-**🎮 `GameSettings.cs` - Difficulty Configuration:**
-
-```csharp
-public enum Difficulty { Easy, Medium, Hard, Default }
-
-public WaveConfig GetWaveConfig()
-{
-    switch (currentDifficulty)
-    {
-        case Difficulty.Easy:
-            return new WaveConfig {
-                totalWaves = 1,
-                timeLimit = 120f,        // 2 minutes
-                enemyHealthMultiplier = 0.8f,
-                coinsRequired = 0
-            };
-        case Difficulty.Hard:
-            return new WaveConfig {
-                totalWaves = 5,
-                timeLimit = 60f,         // 1 minute!
-                enemyHealthMultiplier = 1.2f,
-                startWithSuddenDeath = true,
-                coinsRequired = 50
-            };
-    }
-}
-```
-
-</td>
-</tr>
-</table>
-
-**📊 Difficulty Comparison:**
-
-| Setting | 🟢 Easy | 🟡 Medium | 🔴 Hard | ⚪ Default |
-|---------|----------|-----------|----------|----------|
-| **Waves** | 1 | 3 | 5 | 5 |
-| **Time Limit** | 2 min | 8 min | 1 min | 10 min |
-| **Enemy HP** | 0.8x | 1.0x | 1.2x | 1.0x |
-| **Enemy DMG** | 0.8x | 1.0x | 1.2x | 1.0x |
-| **Sudden Death** | ❌ | ❌ | ✅ | ❌ |
-| **Coins Required** | 0 | 0 | 50 | 0 |
-
-**💾 Persistence via PlayerPrefs:**
-```csharp
-public void SaveSettings()
-{
-    PlayerPrefs.SetInt("GameDifficulty", (int)currentDifficulty);
-    PlayerPrefs.SetInt("GameMap", (int)currentMap);
-    PlayerPrefs.Save();
-}
-```
-
----
-
-<div align="center">
-
-## 🔧 **PHASE 5: TECHNICAL REPORT**
+## 🔧 **PHASE 4: TECHNICAL REPORT**
 
 ![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp&logoColor=white)
 ![Unity](https://img.shields.io/badge/Unity-100000?style=for-the-badge&logo=unity&logoColor=white)
@@ -1117,7 +457,7 @@ public bool enableHoming = true;
 
 <div align="center">
 
-## 📦 **PHASE 6: RELEASE VERSION**
+## 📦 **PHASE 5: RELEASE VERSION**
 
 ![Version](https://img.shields.io/badge/Version-1.0.0-orange?style=for-the-badge&logo=semanticrelease)
 ![Status](https://img.shields.io/badge/Status-Released-success?style=for-the-badge)
@@ -1177,7 +517,7 @@ Build download links will be provided upon final release
 
 <div align="center">
 
-## 🎮 **PHASE 7: INSTALLATION & SETUP**
+## 🎮 **PHASE 6: INSTALLATION & SETUP**
 
 ![Windows](https://img.shields.io/badge/Windows-Install-0078D6?style=for-the-badge&logo=windows)
 ![macOS](https://img.shields.io/badge/macOS-Install-000000?style=for-the-badge&logo=apple)
@@ -1486,7 +826,7 @@ If you encounter issues not covered here:
 
 <div align="center">
 
-## 📚 **PHASE 8: DOCUMENTATION & TOOLS**
+## 📚 **PHASE 7: DOCUMENTATION & TOOLS**
 
 ![Documentation](https://img.shields.io/badge/Documentation-Complete-success?style=for-the-badge)
 ![Tools](https://img.shields.io/badge/Tools-Professional-blue?style=for-the-badge)
@@ -1552,7 +892,7 @@ If you encounter issues not covered here:
 
 <div align="center">
 
-## 🤝 **PHASE 9: CONTRIBUTING GUIDE**
+## 🤝 **PHASE 8: CONTRIBUTING GUIDE**
 
 ![Contributions](https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=for-the-badge)
 ![PRs](https://img.shields.io/badge/PRs-Open-blue?style=for-the-badge)
@@ -1725,7 +1065,7 @@ public void start_game() { }
 
 <div align="center">
 
-## 👥 **PHASE 10: CREDITS**
+## 👥 **PHASE 9: CREDITS**
 
 ![Team](https://img.shields.io/badge/Team-6_Members-blue?style=for-the-badge)
 ![Country](https://img.shields.io/badge/Made_in-Cambodia_🇰🇭-red?style=for-the-badge)
@@ -1791,14 +1131,14 @@ public void start_game() { }
 
 ### 💻
 **Choeng Rayu**  
-*Developer*
+*System Designer*
 
 </td>
 <td align="center" width="150">
 
 ### 💻
 **Tep Somnang**  
-*Developer*
+*Tester and Map Designer*
 
 </td>
 </tr>
@@ -1814,7 +1154,7 @@ public void start_game() { }
 
 ### 💻
 **Khun Sophavisnuka**  
-*Developer*
+*Game Logic Designer*
 
 </td>
 <td align="center" width="150">
